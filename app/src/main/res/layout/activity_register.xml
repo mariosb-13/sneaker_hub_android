@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient">
+
+    <LinearLayout
+        android:id="@+id/headerContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="30dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/logo_app"
+            android:layout_marginEnd="10dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SneakerHub"
+            android:fontFamily="@font/app_font"
+            android:textFontWeight="700"
+            android:textColor="@color/color_6"
+            android:textSize="30sp" />
+    </LinearLayout>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="30dp"
+        app:cardBackgroundColor="@color/color_4"
+        app:cardCornerRadius="30dp"
+        app:cardElevation="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/headerContainer">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="25dp">
+
+            <EditText
+                android:id="@+id/etEmail"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginBottom="15dp"
+                android:background="@drawable/bg_input_white"
+                android:drawableStart="@drawable/ic_email"
+                android:drawablePadding="10dp"
+                android:hint="Correo"
+                android:inputType="textEmailAddress"
+                android:paddingStart="15dp"
+                android:textColorHint="@color/color_3"
+                android:textSize="14sp"
+                android:fontFamily="@font/app_font" />
+
+            <EditText
+                android:id="@+id/etUser"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginBottom="15dp"
+                android:background="@drawable/bg_input_white"
+                android:drawableStart="@drawable/ic_person"
+                android:drawablePadding="10dp"
+                android:hint="Usuario"
+                android:inputType="textPersonName"
+                android:paddingStart="15dp"
+                android:textColorHint="@color/color_3"
+                android:textSize="14sp"
+                android:fontFamily="@font/app_font" />
+
+            <EditText
+                android:id="@+id/etPassword"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginBottom="15dp"
+                android:background="@drawable/bg_input_white"
+                android:drawableStart="@drawable/ic_key"
+                android:drawablePadding="10dp"
+                android:hint="Contraseña"
+                android:inputType="textPassword"
+                android:paddingStart="15dp"
+                android:textColorHint="@color/color_3"
+                android:textSize="14sp"
+                android:fontFamily="@font/app_font" />
+
+            <EditText
+                android:id="@+id/etConfirmPassword"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginBottom="15dp"
+                android:background="@drawable/bg_input_white"
+                android:drawableStart="@drawable/ic_key"
+                android:drawablePadding="10dp"
+                android:hint="Repetir Contraseña"
+                android:inputType="textPassword"
+                android:paddingStart="15dp"
+                android:textColorHint="@color/color_3"
+                android:textSize="14sp"
+                android:fontFamily="@font/app_font" />
+
+            <EditText
+                android:id="@+id/etPhone"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginBottom="25dp"
+                android:background="@drawable/bg_input_white"
+                android:drawableStart="@drawable/ic_telf"
+                android:drawablePadding="10dp"
+                android:hint="Teléfono"
+                android:inputType="phone"
+                android:paddingStart="15dp"
+                android:textColorHint="@color/color_3"
+                android:textSize="14sp"
+                android:fontFamily="@font/app_font" />
+
+            <Button
+                android:id="@+id/btnRegister"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginBottom="15dp"
+                android:backgroundTint="@color/color_6"
+                android:text="@string/Signin"
+                android:textAllCaps="false"
+                android:fontFamily="@font/app_font"
+                android:textFontWeight="700"
+                app:cornerRadius="30dp" />
+
+            <Button
+                android:id="@+id/btnGoogleRegister"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:backgroundTint="@color/color_7"
+                android:text="@string/SigninGoogle"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:fontFamily="@font/app_font"
+                android:textFontWeight="700"
+                app:cornerRadius="30dp"
+                app:icon="@drawable/ic_google"
+                app:iconGravity="textStart"
+                app:iconPadding="15dp"
+                app:iconTint="@null" />
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
