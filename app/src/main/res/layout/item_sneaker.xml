@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="@android:color/transparent">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_brand_item"
+        android:padding="12dp">
+        <ImageView
+            android:id="@+id/ivSneaker"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:scaleType="fitCenter"
+            android:background="@android:color/white"
+            android:src="@drawable/nike" />
+
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Nike Dunk Low"
+            android:textSize="14sp"
+            android:fontFamily="@font/app_font"
+            android:textStyle="bold"
+            android:textColor="@color/color_1"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+
+        <TextView
+            android:id="@+id/tvPrice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="300 €"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_1"
+            android:layout_marginTop="2dp"/>
+
+        <TextView
+            android:id="@+id/tvBrand"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="The Powerpuff Girls..."
+            android:textSize="10sp"
+            android:textColor="@color/color_6"
+            android:layout_marginTop="2dp"/>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
