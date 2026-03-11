@@ -2,6 +2,7 @@ package es.iescarrillo.sneakerhub.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.Patterns;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,18 +29,21 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreSettings;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import es.iescarrillo.sneakerhub.R;
 import es.iescarrillo.sneakerhub.models.User;
 
 public class LoginActivity extends AppCompatActivity {
 
-    // UI Elements
     private EditText etEmail, etPassword;
     private Button btnLogin, btnGoogle;
     private TextView tvForgotPassword;
 
-    // Firebase & Google
     private FirebaseAuth mAuth;
     private GoogleSignInClient mGoogleSignInClient;
 
@@ -48,22 +52,10 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.login), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-
-        // Inicializar Firebase
         mAuth = FirebaseAuth.getInstance();
-
-        // Configurar Google
         configureGoogleSignIn();
-
-        // Vincular Vistas
         initViews();
 
-        // Listeners (Botones)
         btnLogin.setOnClickListener(v -> loginWithEmail());
         btnGoogle.setOnClickListener(v -> signInWithGoogle());
         tvForgotPassword.setOnClickListener(v -> resetPassword());
@@ -77,46 +69,28 @@ public class LoginActivity extends AppCompatActivity {
         tvForgotPassword = findViewById(R.id.tvForgotPassword);
     }
 
-    /**
-     * Iniciar sesión con correo y contraseña
-     */
     private void loginWithEmail() {
         String email = etEmail.getText().toString().trim();
         String pass = etPassword.getText().toString().trim();
 
         if (email.isEmpty() || pass.isEmpty()) {
-            Toast.makeText(this, "Por favor, rellena todos los campos", Toast.LENGTH_SHORT).show();
-            return;
+            Toast.makeText(this, "Rellena los campos", Toast.LENGTH_SHORT).show(); return;
         }
 
         mAuth.signInWithEmailAndPassword(email, pass)
-                .addOnSuccessListener(authResult -> {
-                    // Si entra con correo, asumimos que ya se registró bien y tiene datos.
-                    goToMain();
-                })
-                .addOnFailureListener(e -> Toast.makeText(this, "Error: Usuario o contraseña incorrectos", Toast.LENGTH_SHORT).show());
+                .addOnSuccessListener(authResult -> goToMain())
+                .addOnFailureListener(e -> Toast.makeText(this, "Error de acceso", Toast.LENGTH_SHORT).show());
     }
 
-    /**
-     * Recuperar contraseña
-     */
     private void resetPassword() {
         String email = etEmail.getText().toString().trim();
-
         if (email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            etEmail.setError("Escribe aquí tu correo válido primero");
-            etEmail.requestFocus();
-            return;
+            etEmail.setError("Introduce tu correo"); return;
         }
-
         mAuth.sendPasswordResetEmail(email)
-                .addOnSuccessListener(unused -> Toast.makeText(this, "Correo de recuperación enviado", Toast.LENGTH_LONG).show())
-                .addOnFailureListener(e -> Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnSuccessListener(unused -> Toast.makeText(this, "Email de recuperación enviado", Toast.LENGTH_LONG).show());
     }
 
-    /**
-     * Configurar Google Sign In
-     */
     private void configureGoogleSignIn() {
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
@@ -125,20 +99,13 @@ public class LoginActivity extends AppCompatActivity {
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
     }
 
-    /**
-     * Iniciar sesión con Google
-     */
     private void signInWithGoogle() {
-        // TRUCO: Desconectamos primero para forzar que salga el selector de cuentas siempre
         mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> {
             Intent signInIntent = mGoogleSignInClient.getSignInIntent();
             googleSignInLauncher.launch(signInIntent);
         });
     }
 
-    /**
-     * Launcher para Google Sign In
-     */
     private final ActivityResultLauncher<Intent> googleSignInLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -148,76 +115,76 @@ public class LoginActivity extends AppCompatActivity {
                         GoogleSignInAccount account = task.getResult(ApiException.class);
                         firebaseAuthWithGoogle(account.getIdToken());
                     } catch (ApiException e) {
-                        Toast.makeText(this, "Google falló: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Fallo Google", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
     );
 
-    /**
-     * Firebase Auth con Google
-     * @param idToken
-     */
     private void firebaseAuthWithGoogle(String idToken) {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
         mAuth.signInWithCredential(credential)
                 .addOnSuccessListener(authResult -> {
-                    // EL GUARDIÁN: Verificamos si este usuario de Google ya tiene datos en Realtime DB
-                    checkUserInDatabase(mAuth.getCurrentUser());
-                })
-                .addOnFailureListener(e -> Toast.makeText(this, "Error Auth Google", Toast.LENGTH_SHORT).show());
+                    FirebaseUser user = mAuth.getCurrentUser();
+                    if (user != null) {
+                        if (authResult.getAdditionalUserInfo().isNewUser()) {
+                            sendWelcomeEmail(user.getEmail(), user.getDisplayName());
+                        }
+                        checkUserInDatabase(user);
+                    }
+                });
     }
 
-    /**
-     * Verificar si el usuario ya tiene datos en Realtime DB
-     * @param firebaseUser
-     */
     private void checkUserInDatabase(FirebaseUser firebaseUser) {
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(firebaseUser.getUid());
-
         userRef.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                DataSnapshot snapshot = task.getResult();
-                if (snapshot.exists()) {
-                    // CASO 1: Ya existe -> Pa' dentro
-                    goToMain();
-                } else {
-                    // CASO 2: Es nuevo (entró por Login en vez de Registro) -> Lo guardamos
-                    saveUserToRealtimeDb(firebaseUser);
-                }
+            if (task.isSuccessful() && !task.getResult().exists()) {
+                saveUserToRealtimeDb(firebaseUser);
             } else {
-                // Si falla la lectura por internet, dejamos pasar por usabilidad
                 goToMain();
             }
         });
     }
 
-    /**
-     * Guardar en Realtime Database
-     * @param firebaseUser
-     */
     private void saveUserToRealtimeDb(FirebaseUser firebaseUser) {
-        User newUser = new User(
-                firebaseUser.getUid(),
-                firebaseUser.getDisplayName(),
-                firebaseUser.getEmail(),
-                "Sin teléfono" // Dato por defecto al venir de Google
-        );
-
-        FirebaseDatabase.getInstance().getReference("users")
-                .child(firebaseUser.getUid())
-                .setValue(newUser)
-                .addOnSuccessListener(aVoid -> goToMain());
-
+        User newUser = new User(firebaseUser.getUid(), firebaseUser.getDisplayName(), firebaseUser.getEmail(), "Sin teléfono");
+        FirebaseDatabase.getInstance().getReference("users").child(firebaseUser.getUid())
+                .setValue(newUser).addOnSuccessListener(aVoid -> goToMain());
     }
 
-    /**
-     * Navegar a la tienda
-     */
     private void goToMain() {
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    private void sendWelcomeEmail(String userEmail, String userName) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance("firestore");
+        FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
+                .setPersistenceEnabled(false).build();
+        db.setFirestoreSettings(settings);
+
+        String welcomeHtml =
+                "<div style=\"background-color: #f9f9f9; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;\">" +
+                        "  <div style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #eeeeee;\">" +
+                        "    <div style=\"padding: 40px 20px 20px 20px; text-align: center;\">" +
+                        "      <img src=\"https://firebasestorage.googleapis.com/v0/b/sneakerhub-3862d.firebasestorage.app/o/Logo_Negro.png?alt=media&token=ab6c0d4d-7a2a-4692-b0e2-81acf957796d\" alt=\"Logo\" style=\"width: 180px; height: auto; display: block; margin: 0 auto;\">" +
+                        "    </div>" +
+                        "    <div style=\"padding: 0 50px 40px 50px; text-align: center; color: #111111;\">" +
+                        "      <h2>¡Bienvenido, " + userName + "!</h2>" +
+                        "      <p>Ya eres parte de SneakerHub.</p>" +
+                        "    </div>" +
+                        "  </div>" +
+                        "</div>";
+
+        Map<String, Object> emailData = new HashMap<>();
+        emailData.put("to", userEmail);
+        Map<String, String> message = new HashMap<>();
+        message.put("subject", "¡Bienvenido a SneakerHub! 🎉");
+        message.put("html", welcomeHtml);
+        emailData.put("message", message);
+
+        db.collection("mail").add(emailData);
     }
 }

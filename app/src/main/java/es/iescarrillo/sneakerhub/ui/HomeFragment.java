@@ -1,11 +1,11 @@
 package es.iescarrillo.sneakerhub.ui;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,6 +16,8 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.Calendar;
 
 import es.iescarrillo.sneakerhub.R;
 
@@ -39,10 +41,28 @@ public class HomeFragment extends Fragment {
         loadUserName();
     }
 
+    // Método para calcular el saludo según la hora del dispositivo
+    private String obtenerSaludo() {
+        Calendar c = Calendar.getInstance();
+        int timeOfDay = c.get(Calendar.HOUR_OF_DAY);
+
+        if (timeOfDay >= 6 && timeOfDay < 12) {
+            return "Buenos Días";
+        } else if (timeOfDay >= 12 && timeOfDay < 20) {
+            return "Buenas Tardes";
+        } else {
+            return "Buenas Noches";
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
     private void loadUserName() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
+        String saludo = obtenerSaludo();
+
         if (currentUser != null) {
+            // USUARIO LOGUEADO
             String uid = currentUser.getUid();
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
 
@@ -54,14 +74,17 @@ public class HomeFragment extends Fragment {
                     String username = snapshot.child("username").getValue(String.class);
 
                     if (username != null && !username.isEmpty()) {
-                        // Actualizamos el texto
-                        tvGreeting.setText("Buenas Tardes\n" + username + "...");
+                        // Actualizamos el texto con el saludo dinámico
+                        tvGreeting.setText(saludo + "\n" + username + "...");
                     }
                 } else {
-                    // Si falla algo o no hay internet, dejamos un mensaje por defecto
-                    tvGreeting.setText("Buenas Tardes");
+                    // Si falla algo o no hay internet, dejamos el saludo por defecto sin nombre
+                    tvGreeting.setText(saludo + "...");
                 }
             });
+        } else {
+            // INVITADO (no hay usuario logueado)
+            tvGreeting.setText(saludo + "\nInvitado...");
         }
     }
 }

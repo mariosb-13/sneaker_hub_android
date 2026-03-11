@@ -34,7 +34,6 @@ public class SearchFragment extends Fragment {
     private SneakerAdapter adapter;
     private List<Sneaker> sneakerList;
 
-    // CAMBIO: Ahora usamos DatabaseReference
     private DatabaseReference dbRef;
 
     @Override
@@ -109,7 +108,7 @@ public class SearchFragment extends Fragment {
         final String finalBrand = brandFilter;
         final String finalGender = genderFilter;
 
-        // 2. LEER DATOS DE REALTIME (ValueEventListener)
+        // LEER DATOS DE REALTIME (ValueEventListener)
         dbRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
