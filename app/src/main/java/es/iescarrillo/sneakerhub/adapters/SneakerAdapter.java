@@ -19,14 +19,14 @@ public class SneakerAdapter extends RecyclerView.Adapter<SneakerAdapter.SneakerV
 
     private List<Sneaker> sneakerList;
     private Context context;
-    private final OnItemClickListener listener; // <--- NUEVO: Variable para el listener
+    private final OnItemClickListener listener;
 
-    // 1. DEFINIMOS LA INTERFAZ (El contrato para el click)
+    // DEFINIMOS LA INTERFAZ (El contrato para el click)
     public interface OnItemClickListener {
         void onItemClick(Sneaker sneaker);
     }
 
-    // 2. ACTUALIZAMOS EL CONSTRUCTOR PARA RECIBIR EL LISTENER
+    // ACTUALIZAMOS EL CONSTRUCTOR PARA RECIBIR EL LISTENER
     public SneakerAdapter(List<Sneaker> sneakerList, Context context, OnItemClickListener listener) {
         this.sneakerList = sneakerList;
         this.context = context;
@@ -61,10 +61,10 @@ public class SneakerAdapter extends RecyclerView.Adapter<SneakerAdapter.SneakerV
             holder.ivSneaker.setImageResource(R.drawable.logo_app);
         }
 
-        // 3. DETECTAR EL CLICK EN TODA LA FILA
+        // DETECTAR EL CLICK EN TODA LA FILA
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
-                listener.onItemClick(sneaker); // ¡Avisamos al fragmento!
+                listener.onItemClick(sneaker);
             }
         });
     }

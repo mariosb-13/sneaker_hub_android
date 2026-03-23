@@ -5,12 +5,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -20,18 +20,33 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import es.iescarrillo.sneakerhub.R;
+import es.iescarrillo.sneakerhub.adapters.BrandSideAdapter; // Importante para el RecyclerView
 
 public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
     private ImageView navHome, navSearch, navCart, navProfile;
-    private LinearLayout btnSideNike, btnSideAdidas;
     private TextView btnToggleMen, btnToggleWomen;
+
+    // Cambiamos los botones fijos por el RecyclerView
+    private RecyclerView rvSideBrands;
+
     private String currentGenderFilter = "Man";
 
     @Override
@@ -85,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
         navCart.setOnClickListener(v -> loadFragment(new CartFragment(), navCart));
         navProfile.setOnClickListener(v -> loadFragment(new ProfileFragment(), navProfile));
 
+        // Inicializamos el menú lateral dinámico
         setupSideSheetLogic();
 
         if (savedInstanceState == null) {
@@ -95,15 +111,53 @@ public class MainActivity extends AppCompatActivity {
     private void setupSideSheetLogic() {
         btnToggleMen = findViewById(R.id.btnToggleMen);
         btnToggleWomen = findViewById(R.id.btnToggleWomen);
-        btnSideNike = findViewById(R.id.btnSideNike);
-        btnSideAdidas = findViewById(R.id.btnSideAdidas);
+        rvSideBrands = findViewById(R.id.rvSideBrands);
 
         if (btnToggleMen != null) btnToggleMen.setOnClickListener(v -> updateGenderVisuals("Man"));
         if (btnToggleWomen != null) btnToggleWomen.setOnClickListener(v -> updateGenderVisuals("Woman"));
-        if (btnSideNike != null) btnSideNike.setOnClickListener(v -> navigateToFilter("Nike"));
-        if (btnSideAdidas != null) btnSideAdidas.setOnClickListener(v -> navigateToFilter("Adidas"));
 
         if (btnToggleMen != null) updateGenderVisuals("Man");
+
+        // Cargamos las marcas desde Firebase
+        cargarMarcasEnSideMenu();
+    }
+
+    // MÉTODO NUEVO: Cargar marcas únicas desde la BD
+    private void cargarMarcasEnSideMenu() {
+        if (rvSideBrands == null) return;
+
+        DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("sneakers");
+        rvSideBrands.setLayoutManager(new LinearLayoutManager(this));
+
+        dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Set<String> marcasUnicas = new HashSet<>();
+
+                for (DataSnapshot data : snapshot.getChildren()) {
+                    String brand = data.child("brand").getValue(String.class);
+                    if (brand != null && !brand.trim().isEmpty()) {
+                        marcasUnicas.add(brand);
+                    }
+                }
+
+                // Pasamos el Set a una Lista y la ordenamos alfabéticamente
+                List<String> marcasLista = new ArrayList<>(marcasUnicas);
+                Collections.sort(marcasLista);
+
+                // Inicializamos el adaptador
+                BrandSideAdapter adapter = new BrandSideAdapter(marcasLista, brand -> {
+                    navigateToFilter(brand);
+                });
+
+                rvSideBrands.setAdapter(adapter);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(MainActivity.this, "Error cargando marcas", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void updateGenderVisuals(String gender) {
@@ -115,12 +169,13 @@ public class MainActivity extends AppCompatActivity {
         int pRight = btnToggleMen.getPaddingRight();
         int pBottom = btnToggleMen.getPaddingBottom();
 
-        int colorActive = ContextCompat.getColor(this, R.color.color_4);
-        int colorInactive = ContextCompat.getColor(this, R.color.color_3);
+        // COLORES DINÁMICOS BASADOS EN TU NUEVO XML
+        int colorActive = ContextCompat.getColor(this, R.color.color_6); // Negro en claro, Blanco en oscuro
+        int colorInactive = ContextCompat.getColor(this, R.color.color_2); // Gris secundario
 
         if (gender.equals("Man")) {
             btnToggleMen.setBackgroundResource(R.drawable.bg_brand_item);
-            btnToggleMen.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.white));
+            btnToggleMen.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.white)); // Blanco en claro, Gris oscuro en oscuro
             btnToggleMen.setTextColor(colorActive);
             btnToggleMen.setElevation(8f);
 
@@ -144,11 +199,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void navigateToFilter(String brand) {
         drawerLayout.closeDrawer(GravityCompat.START);
+
         SearchFragment fragment = new SearchFragment();
         Bundle args = new Bundle();
         args.putString("BRAND", brand);
         args.putString("GENDER", currentGenderFilter);
         fragment.setArguments(args);
+
         loadFragment(fragment, navSearch);
         Toast.makeText(this, "Filtrando: " + brand + " (" + currentGenderFilter + ")", Toast.LENGTH_SHORT).show();
     }
@@ -161,7 +218,6 @@ public class MainActivity extends AppCompatActivity {
         updateIconColors(activeIcon);
 
         View topBar = findViewById(R.id.topBar);
-        // ¡Cero paddings mágicos para el contenedor! Ahora la pantalla es 100% libre.
 
         if (topBar != null) {
             if (fragment instanceof SearchFragment) {
@@ -175,8 +231,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateIconColors(ImageView activeIcon) {
-        int colorActive = ContextCompat.getColor(this, R.color.color_1);
-        int colorInactive = ContextCompat.getColor(this, R.color.color_3);
+        int colorActive = ContextCompat.getColor(this, R.color.color_6); // Tu negro/blanco principal
+        int colorInactive = ContextCompat.getColor(this, R.color.color_2);
 
         navHome.setColorFilter(colorInactive);
         navSearch.setColorFilter(colorInactive);
@@ -190,7 +246,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void configurarBarra(int colorFondo, boolean iconosNegros) {
         Window window = getWindow();
-        // Hacemos las barras del sistema transparentes para que el fondo se vea por debajo
         window.setStatusBarColor(Color.TRANSPARENT);
         window.setNavigationBarColor(Color.TRANSPARENT);
 

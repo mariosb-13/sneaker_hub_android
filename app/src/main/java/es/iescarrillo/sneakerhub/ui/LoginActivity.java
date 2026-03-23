@@ -161,19 +161,24 @@ public class LoginActivity extends AppCompatActivity {
 
     private void sendWelcomeEmail(String userEmail, String userName) {
         FirebaseFirestore db = FirebaseFirestore.getInstance("firestore");
-        FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
-                .setPersistenceEnabled(false).build();
+        FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder().setPersistenceEnabled(false).build();
         db.setFirestoreSettings(settings);
 
+        String logoUrl = "https://firebasestorage.googleapis.com/v0/b/sneakerhub-3862d.firebasestorage.app/o/SneakerHub.png?alt=media&token=a42e0979-51b2-4a72-ad48-b8a9974ad37a";
+        String webUrl = "https://sneaker-hub-web.onrender.com";
+
         String welcomeHtml =
-                "<div style=\"background-color: #f9f9f9; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;\">" +
-                        "  <div style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #eeeeee;\">" +
-                        "    <div style=\"padding: 40px 20px 20px 20px; text-align: center;\">" +
-                        "      <img src=\"https://firebasestorage.googleapis.com/v0/b/sneakerhub-3862d.firebasestorage.app/o/Logo_Negro.png?alt=media&token=ab6c0d4d-7a2a-4692-b0e2-81acf957796d\" alt=\"Logo\" style=\"width: 180px; height: auto; display: block; margin: 0 auto;\">" +
+                "<div style=\"background-color: #f4f4f4; padding: 40px 0; font-family: Arial, sans-serif;\">" +
+                        "  <div style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0;\">" +
+                        "    <div style=\"padding: 40px 20px; text-align: center;\">" +
+                        "      <img src=\"" + logoUrl + "\" alt=\"SneakerHub\" style=\"width: 200px; height: auto;\">" +
                         "    </div>" +
-                        "    <div style=\"padding: 0 50px 40px 50px; text-align: center; color: #111111;\">" +
-                        "      <h2>¡Bienvenido, " + userName + "!</h2>" +
-                        "      <p>Ya eres parte de SneakerHub.</p>" +
+                        "    <div style=\"padding: 0 40px 40px; text-align: center; color: #333333;\">" +
+                        "      <h1 style=\"font-size: 26px;\">¡Bienvenido, " + userName + "!</h1>" +
+                        "      <p>Gracias por unirte a SneakerHub.</p>" +
+                        "      <div style=\"margin-top: 25px;\">" +
+                        "        <a href=\"" + webUrl + "\" style=\"background-color: #000000; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;\">IR A LA TIENDA</a>" +
+                        "      </div>" +
                         "    </div>" +
                         "  </div>" +
                         "</div>";
@@ -181,7 +186,7 @@ public class LoginActivity extends AppCompatActivity {
         Map<String, Object> emailData = new HashMap<>();
         emailData.put("to", userEmail);
         Map<String, String> message = new HashMap<>();
-        message.put("subject", "¡Bienvenido a SneakerHub! 🎉");
+        message.put("subject", "¡Bienvenido a la familia SneakerHub! 🎉");
         message.put("html", welcomeHtml);
         emailData.put("message", message);
 

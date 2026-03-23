@@ -1,20 +1,26 @@
 package es.iescarrillo.sneakerhub.ui;
 
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ImageView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import com.bumptech.glide.Glide;
 
-import java.util.ArrayList; // Importante
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import es.iescarrillo.sneakerhub.R;
@@ -23,89 +29,135 @@ public class DetailFragment extends Fragment {
 
     private ImageView ivDetailImage;
     private TextView tvDetailBrand, tvDetailName, tvDetailPrice;
-    private LinearLayout layoutSizesContainer; // El contenedor horizontal
+    private LinearLayout layoutSizesContainer;
+    private Button btnAddToCart;
+    private SeekBar seekBar360;
 
-    private String name, brand, imageUrl;
-    private double price;
-    private List<String> sizes; // La lista que viene de Firebase
+    private TextView selectedSizeView = null;
+    private String selectedSize = "";
+    private List<String> images360List;
 
-    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_detail, container, false);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_detail, container, false);
+    }
 
-        // 1. RECIBIR DATOS
-        if (getArguments() != null) {
-            name = getArguments().getString("NAME");
-            brand = getArguments().getString("BRAND");
-            price = getArguments().getDouble("PRICE");
-            imageUrl = getArguments().getString("IMAGE");
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
-            // Recibimos la lista de tallas
-            sizes = getArguments().getStringArrayList("SIZES");
-        }
-
-        // 2. VINCULAR VISTAS
         ivDetailImage = view.findViewById(R.id.ivDetailImage);
         tvDetailBrand = view.findViewById(R.id.tvDetailBrand);
         tvDetailName = view.findViewById(R.id.tvDetailName);
         tvDetailPrice = view.findViewById(R.id.tvDetailPrice);
         layoutSizesContainer = view.findViewById(R.id.layoutSizesContainer);
-        View btnAddToCart = view.findViewById(R.id.btnAddToCart);
+        btnAddToCart = view.findViewById(R.id.btnAddToCart);
+        seekBar360 = view.findViewById(R.id.seekBar360);
 
-        // 3. PINTAR DATOS BÁSICOS
-        tvDetailBrand.setText(brand);
-        tvDetailName.setText(name);
-        tvDetailPrice.setText(String.format("%.2f €", price));
-        if (getContext() != null) Glide.with(getContext()).load(imageUrl).into(ivDetailImage);
+        if (getArguments() != null) {
+            String name = getArguments().getString("NAME");
+            String brand = getArguments().getString("BRAND");
+            double price = getArguments().getDouble("PRICE", 0.0);
+            String imageUrl = getArguments().getString("IMAGE");
+            ArrayList<String> sizes = getArguments().getStringArrayList("SIZES");
 
-        // 4. GENERAR TALLAS DINÁMICAS (Aquí está la magia)
-        pintarTallas();
+            // Llave corregida para tu Firebase
+            images360List = getArguments().getStringArrayList("images360");
+            if (images360List == null) images360List = getArguments().getStringArrayList("IMAGES_360");
 
-        // 5. BOTÓN
-        btnAddToCart.setOnClickListener(v ->
-                Toast.makeText(getContext(), "Añadido: " + name, Toast.LENGTH_SHORT).show()
-        );
+            tvDetailName.setText(name);
+            tvDetailBrand.setText(brand);
+            tvDetailPrice.setText(String.format("%.2f €", price));
 
-        return view;
-    }
+            // 1. Cargamos la principal con prioridad máxima
+            if (imageUrl != null && isAdded()) {
+                Glide.with(this)
+                        .load(imageUrl)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .into(ivDetailImage);
+            }
 
-    private void pintarTallas() {
-        // Limpiamos lo que hubiera antes (ej: los placeholders del XML)
-        layoutSizesContainer.removeAllViews();
+            if (sizes != null) cargarTallas(sizes);
 
-        if (sizes == null || sizes.isEmpty()) {
-            TextView error = new TextView(getContext());
-            error.setText("Agotado");
-            layoutSizesContainer.addView(error);
-            return;
+            // 2. MAGIA: Empezamos a descargar el 360 por detrás NADA MÁS ENTRAR
+            if (images360List != null && !images360List.isEmpty()) {
+                seekBar360.setVisibility(View.VISIBLE);
+                seekBar360.setMax(images360List.size() - 1);
+
+                for (String url : images360List) {
+                    Glide.with(this).load(url).diskCacheStrategy(DiskCacheStrategy.ALL).preload();
+                }
+
+                seekBar360.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                    @Override
+                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                        if (fromUser && isAdded()) {
+                            // Al usar placeholder(ivDetailImage.getDrawable()), si la foto nueva
+                            // aún no ha bajado, se queda la anterior y no ves el parpadeo
+                            Glide.with(DetailFragment.this)
+                                    .load(images360List.get(progress))
+                                    .placeholder(ivDetailImage.getDrawable())
+                                    .dontAnimate()
+                                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                    .into(ivDetailImage);
+                        }
+                    }
+                    @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                    @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+                });
+            } else {
+                seekBar360.setVisibility(View.GONE);
+            }
         }
 
-        // Bucle: Por cada talla en la lista, creamos un TextView
-        for (String talla : sizes) {
-            TextView tvTalla = new TextView(getContext());
-            tvTalla.setText("EU " + talla);
-            tvTalla.setTextSize(14f);
-            tvTalla.setTextColor(ContextCompat.getColor(requireContext(), R.color.color_6));
-            tvTalla.setPadding(40, 20, 40, 20);
+        btnAddToCart.setOnClickListener(v -> {
+            if (selectedSize.isEmpty()) {
+                Toast.makeText(getContext(), "¡Selecciona tu talla!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), "Añadido: Talla " + selectedSize, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
-            // Usamos un fondo de sistema o uno tuyo propio
-            tvTalla.setBackgroundResource(android.R.drawable.editbox_background_normal);
+    private void cargarTallas(List<String> sizes) {
+        layoutSizesContainer.removeAllViews();
+        for (String size : sizes) {
+            TextView tvSize = new TextView(getContext());
+            tvSize.setText(size);
+            tvSize.setTextSize(16f);
+            tvSize.setGravity(Gravity.CENTER);
+            tvSize.setBackgroundResource(R.drawable.bg_brand_item);
 
-            // Márgenes para separarlos
+            tvSize.setBackgroundTintList(ContextCompat.getColorStateList(getContext(), R.color.color_5));
+            tvSize.setTextColor(ContextCompat.getColor(getContext(), R.color.color_6));
+
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
+                    (int) (60 * getResources().getDisplayMetrics().density),
+                    (int) (45 * getResources().getDisplayMetrics().density)
             );
-            params.setMargins(10, 0, 10, 0);
-            tvTalla.setLayoutParams(params);
+            params.setMargins(0, 0, (int) (12 * getResources().getDisplayMetrics().density), 0);
+            tvSize.setLayoutParams(params);
 
-            tvTalla.setOnClickListener(v ->
-                    Toast.makeText(getContext(), "Talla " + talla, Toast.LENGTH_SHORT).show()
-            );
+            tvSize.setOnClickListener(v -> {
+                if (selectedSizeView != null) {
+                    selectedSizeView.setBackgroundTintList(ContextCompat.getColorStateList(getContext(), R.color.color_5));
+                    selectedSizeView.setTextColor(ContextCompat.getColor(getContext(), R.color.color_6));
+                }
+                tvSize.setBackgroundTintList(ContextCompat.getColorStateList(getContext(), R.color.color_6));
+                tvSize.setTextColor(ContextCompat.getColor(getContext(), R.color.trending_card_bg));
+                selectedSizeView = tvSize;
+                selectedSize = size;
+            });
+            layoutSizesContainer.addView(tvSize);
+        }
+    }
 
-            // Añadimos al contenedor
-            layoutSizesContainer.addView(tvTalla);
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getActivity() != null) {
+            View topBar = getActivity().findViewById(R.id.topBar);
+            if (topBar != null) topBar.setVisibility(View.GONE);
         }
     }
 }

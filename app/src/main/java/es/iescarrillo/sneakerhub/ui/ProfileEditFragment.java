@@ -28,11 +28,9 @@ public class ProfileEditFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // OCULTAR MENÚ SUPERIOR
         View topMenu = getActivity().findViewById(R.id.topBar);
         if (topMenu != null) topMenu.setVisibility(View.GONE);
 
-        // VISTAS
         etName = view.findViewById(R.id.etEditName);
         etEmail = view.findViewById(R.id.etEditEmail);
         etPhone = view.findViewById(R.id.etEditPhone);
@@ -42,10 +40,10 @@ public class ProfileEditFragment extends Fragment {
         String uid = FirebaseAuth.getInstance().getUid();
         userRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
 
-        // Cargar datos
+        // Cargar datos usando fullName
         userRef.get().addOnSuccessListener(snapshot -> {
             if (snapshot.exists()) {
-                etName.setText(snapshot.child("username").getValue(String.class));
+                etName.setText(snapshot.child("fullName").getValue(String.class));
                 etPhone.setText(snapshot.child("phone").getValue(String.class));
                 if (FirebaseAuth.getInstance().getCurrentUser() != null) {
                     etEmail.setText(FirebaseAuth.getInstance().getCurrentUser().getEmail());
@@ -53,7 +51,6 @@ public class ProfileEditFragment extends Fragment {
             }
         });
 
-        // CLICKS
         etNavPassword.setOnClickListener(v -> navegarA(new ChangePasswordFragment()));
         etNavAddress.setOnClickListener(v -> navegarA(new ChangeAddressFragment()));
         view.findViewById(R.id.btnSave).setOnClickListener(v -> guardarDatos());
@@ -69,7 +66,8 @@ public class ProfileEditFragment extends Fragment {
             return;
         }
 
-        userRef.child("username").setValue(nuevoNombre);
+        // Guardar en fullName
+        userRef.child("fullName").setValue(nuevoNombre);
         userRef.child("phone").setValue(nuevoTel).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Toast.makeText(getContext(), "Perfil actualizado", Toast.LENGTH_SHORT).show();
@@ -91,8 +89,5 @@ public class ProfileEditFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // VOLVER A MOSTRAR EL MENÚ AL SALIR
-        View topMenu = getActivity().findViewById(R.id.topBar);
-        //if (topMenu != null) topMenu.setVisibility(View.VISIBLE);
     }
 }

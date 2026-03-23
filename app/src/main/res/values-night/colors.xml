@@ -4,9 +4,7 @@
     <color name="transparent">@android:color/transparent</color>
 
     <color name="color_4">#2C2C2C</color>
-
     <color name="color_6">#FFFFFF</color>
-
     <color name="color_7">#EF5350</color>
 
     <color name="color_0">#E0E0E0</color>
@@ -14,4 +12,6 @@
     <color name="color_2">#9E9E9E</color>
     <color name="color_3">#787878</color>
     <color name="color_5">#333333</color>
+
+    <color name="trending_card_bg">#333333</color>
 </resources>

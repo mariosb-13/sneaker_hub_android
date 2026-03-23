@@ -2,98 +2,36 @@ package es.iescarrillo.sneakerhub.models;
 
 public class User {
     private String uid;
-    private String username;
+    private String fullName;
     private String email;
     private String phone;
+    private String rol;
 
-    // NUEVOS CAMPOS
-    private String profileImageUrl;
-    private String zipCode;
-    private String city;
-    private String street;
-    private String door;
-
-    // Constructor vacío obligatorio para Firebase
     public User() {
+        this.rol = "cliente"; // Por defecto siempre cliente
     }
 
-    public User(String uid, String username, String email, String phone) {
+    public User(String uid, String fullName, String email, String phone) {
         this.uid = uid;
-        this.username = username;
+        this.fullName = fullName;
         this.email = email;
         this.phone = phone;
+        this.rol = "cliente";
     }
 
-    // Getters y Setters originales
-    public String getUid() {
-        return uid;
-    }
+    // Getters y Setters
+    public String getUid() { return uid; }
+    public void setUid(String uid) { this.uid = uid; }
 
-    public void setUid(String uid) {
-        this.uid = uid;
-    }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
 
-    public String getUsername() {
-        return username;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getProfileImageUrl() {
-        return profileImageUrl;
-    }
-
-    public void setProfileImageUrl(String profileImageUrl) {
-        this.profileImageUrl = profileImageUrl;
-    }
-
-    public String getZipCode() {
-        return zipCode;
-    }
-
-    public void setZipCode(String zipCode) {
-        this.zipCode = zipCode;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getStreet() {
-        return street;
-    }
-
-    public void setStreet(String street) {
-        this.street = street;
-    }
-
-    public String getDoor() {
-        return door;
-    }
-
-    public void setDoor(String door) {
-        this.door = door;
-    }
+    public String getRol() { return rol; }
+    public void setRol(String rol) { this.rol = rol; }
 }

@@ -10,4 +10,6 @@
     <color name="color_7">#E53935</color>
     <color name="white">#FFFFFF</color>
     <color name="transparent">@android:color/transparent</color>
+
+    <color name="trending_card_bg">#FFFFFF</color>
 </resources>
