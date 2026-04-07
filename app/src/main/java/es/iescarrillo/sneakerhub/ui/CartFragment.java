@@ -110,8 +110,22 @@ public class CartFragment extends Fragment {
 
     private void escucharCarrito() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
 
+        // Usuarios no logueados
+        if (user == null) {
+            cartList.clear();
+            adapter.notifyDataSetChanged();
+            tvTotalPrice.setText("0.00 €");
+            rvCartItems.setVisibility(View.GONE);
+            llEmptyCart.setVisibility(View.VISIBLE); // Mostramos el diseño de "Carrito vacío"
+            btnCheckout.setEnabled(false);           // Desactivamos el botón de pago
+            if (layoutLoadingCart != null) {
+                layoutLoadingCart.setVisibility(View.GONE); // Apagamos el spinner infinito
+            }
+            return; // Ahora sí detenemos la ejecución para no consultar a Firebase
+        }
+
+        // Usuarios logueados
         FirebaseDatabase.getInstance().getReference("cart").child(user.getUid())
                 .addValueEventListener(new ValueEventListener() {
                     @Override
@@ -132,7 +146,10 @@ public class CartFragment extends Fragment {
                         rvCartItems.setVisibility(vacio ? View.GONE : View.VISIBLE);
                         llEmptyCart.setVisibility(vacio ? View.VISIBLE : View.GONE);
                         btnCheckout.setEnabled(!vacio);
-                        if (layoutLoadingCart != null) layoutLoadingCart.setVisibility(View.GONE);
+
+                        if (layoutLoadingCart != null) {
+                            layoutLoadingCart.setVisibility(View.GONE);
+                        }
                     }
                     @Override public void onCancelled(@NonNull DatabaseError error) {}
                 });
