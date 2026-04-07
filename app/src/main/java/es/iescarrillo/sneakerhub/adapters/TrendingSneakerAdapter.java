@@ -6,14 +6,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
-
 import java.util.List;
-
 import es.iescarrillo.sneakerhub.R;
 import es.iescarrillo.sneakerhub.models.Sneaker;
 
@@ -36,7 +32,7 @@ public class TrendingSneakerAdapter extends RecyclerView.Adapter<TrendingSneaker
     @NonNull
     @Override
     public TrendingViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_trending_sneaker, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_trending_sneaker, parent, false);
         return new TrendingViewHolder(view);
     }
 
@@ -46,20 +42,22 @@ public class TrendingSneakerAdapter extends RecyclerView.Adapter<TrendingSneaker
 
         holder.tvName.setText(sneaker.getName());
         holder.tvBrand.setText(sneaker.getBrand());
-        holder.tvPrice.setText(String.format("%.2f€", sneaker.getPrice()));
+        holder.tvPrice.setText(String.format("%.2f €", sneaker.getPrice()));
 
-        Glide.with(context)
+        // CARGA DE IMAGEN SINCRONIZADA
+        Glide.with(holder.itemView.getContext())
                 .load(sneaker.getImageUrl())
-                .placeholder(R.drawable.nike) // Pon una imagen por defecto de carga
+                .placeholder(R.drawable.logo_app)
+                .error(R.drawable.logo_app)
                 .into(holder.ivSneaker);
 
-        holder.itemView.setOnClickListener(v -> listener.onSneakerClick(sneaker));
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onSneakerClick(sneaker);
+        });
     }
 
     @Override
-    public int getItemCount() {
-        return sneakerList.size();
-    }
+    public int getItemCount() { return sneakerList.size(); }
 
     public static class TrendingViewHolder extends RecyclerView.ViewHolder {
         ImageView ivSneaker;

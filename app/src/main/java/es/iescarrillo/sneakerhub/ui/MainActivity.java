@@ -5,10 +5,9 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,9 +17,10 @@ import androidx.core.view.GravityCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.database.DataSnapshot;
@@ -30,230 +30,184 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import es.iescarrillo.sneakerhub.R;
-import es.iescarrillo.sneakerhub.adapters.BrandSideAdapter; // Importante para el RecyclerView
+import es.iescarrillo.sneakerhub.adapters.BrandSideAdapter;
+import es.iescarrillo.sneakerhub.adapters.GenericSideAdapter;
+import es.iescarrillo.sneakerhub.models.Brand;
 
 public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
+    private View topBar, bottomBar;
     private ImageView navHome, navSearch, navCart, navProfile;
+
+    private RecyclerView rvSideBrands, rvSideSizes, rvSidePrices;
     private TextView btnToggleMen, btnToggleWomen;
 
-    // Cambiamos los botones fijos por el RecyclerView
-    private RecyclerView rvSideBrands;
+    private String selectedGender = "Man";
+    private String selectedBrand = "";
+    private String selectedSize = "";
+    private int selectedMaxPrice = 10000; // Por defecto un precio alto
 
-    private String currentGenderFilter = "Man";
+    private List<Brand> brandList = new ArrayList<>();
+    private BrandSideAdapter brandAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // 1. ACTIVAR MODO EDGE-TO-EDGE (Pantalla completa real)
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-
         setContentView(R.layout.activity_main);
 
         drawerLayout = findViewById(R.id.drawerLayout);
+        topBar = findViewById(R.id.topBar);
+        bottomBar = findViewById(R.id.bottomBar);
         View mainContent = findViewById(R.id.mainContent);
-        View topBar = findViewById(R.id.topBar);
-        View bottomBar = findViewById(R.id.bottomBar);
 
-        // 2. MATEMÁTICAS: Calcular la altura de la batería y los botones de abajo
+        // --- INSETS (Márgenes) ---
         ViewCompat.setOnApplyWindowInsetsListener(mainContent, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-
-            // Empujar el TopBar hacia abajo (16dp originales + altura de la barra de estado)
-            if (topBar != null) {
-                ViewGroup.MarginLayoutParams topParams = (ViewGroup.MarginLayoutParams) topBar.getLayoutParams();
-                topParams.topMargin = (int) (16 * getResources().getDisplayMetrics().density) + systemBars.top;
-                topBar.setLayoutParams(topParams);
-            }
-
-            // Empujar el BottomBar hacia arriba (24dp originales + altura de los botones del móvil)
             if (bottomBar != null) {
-                ViewGroup.MarginLayoutParams bottomParams = (ViewGroup.MarginLayoutParams) bottomBar.getLayoutParams();
-                bottomParams.bottomMargin = (int) (24 * getResources().getDisplayMetrics().density) + systemBars.bottom;
-                bottomBar.setLayoutParams(bottomParams);
+                ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) bottomBar.getLayoutParams();
+                lp.bottomMargin = (int) (24 * getResources().getDisplayMetrics().density) + systemBars.bottom;
+                bottomBar.setLayoutParams(lp);
             }
-
             return insets;
         });
 
-        // 3. INICIALIZAR VISTAS
-        ImageView ivMenu = findViewById(R.id.ivMenu);
-        if (ivMenu != null) {
-            ivMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
-        }
-
+        // --- INICIALIZAR VISTAS DEL MENÚ INFERIOR ---
         navHome = findViewById(R.id.navHome);
         navSearch = findViewById(R.id.navSearch);
         navCart = findViewById(R.id.navCart);
         navProfile = findViewById(R.id.navProfile);
 
+        // --- FILTROS SIDE SHEET ---
+        btnToggleMen = findViewById(R.id.btnToggleMen);
+        btnToggleWomen = findViewById(R.id.btnToggleWomen);
+        rvSideBrands = findViewById(R.id.rvSideBrands);
+        rvSideSizes = findViewById(R.id.rvSideSizes);
+        rvSidePrices = findViewById(R.id.rvSidePrices);
+
+        configurarBotonesGenero();
+
+        // Tallas: 4 columnas
+        rvSideSizes.setLayoutManager(new GridLayoutManager(this, 4));
+        List<String> tallas = Arrays.asList("38", "39", "40", "41", "42", "43", "44", "45", "46");
+        rvSideSizes.setAdapter(new GenericSideAdapter(tallas, t -> selectedSize = t));
+
+        // Precios: 3 columnas (Queda más equilibrado que 2)
+        rvSidePrices.setLayoutManager(new GridLayoutManager(this, 3));
+        List<String> precios = Arrays.asList("100€", "150€", "200€", "300€", "500€", "1000€");
+        rvSidePrices.setAdapter(new GenericSideAdapter(precios, p -> selectedMaxPrice = Integer.parseInt(p.replace("€", ""))));
+
+        // Marcas: 2 columnas
+        rvSideBrands.setLayoutManager(new GridLayoutManager(this, 2));
+        brandAdapter = new BrandSideAdapter(brandList, b -> selectedBrand = b.getName());
+        rvSideBrands.setAdapter(brandAdapter);
+        cargarMarcas();
+
+        // Botón Aplicar Filtros
+        findViewById(R.id.btnApplyFilters).setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            Bundle bundle = new Bundle();
+            bundle.putString("filterBrand", selectedBrand);
+            bundle.putString("filterGender", selectedGender);
+            bundle.putInt("filterPrice", selectedMaxPrice);
+            bundle.putString("filterSize", selectedSize);
+
+            SearchFragment fragment = new SearchFragment();
+            fragment.setArguments(bundle);
+            // Pasamos navSearch para que se ilumine la lupa al filtrar
+            loadFragment(fragment, navSearch);
+        });
+
+        // Botón Menú Global (Hamburguesa)
+        ImageView ivMenuGlobal = findViewById(R.id.ivMenuGlobal);
+        if (ivMenuGlobal != null) {
+            ivMenuGlobal.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
+        }
+
+        // --- CONFIGURACIÓN DE CLICKS DE NAVEGACIÓN ---
         navHome.setOnClickListener(v -> loadFragment(new HomeFragment(), navHome));
         navSearch.setOnClickListener(v -> loadFragment(new SearchFragment(), navSearch));
         navCart.setOnClickListener(v -> loadFragment(new CartFragment(), navCart));
         navProfile.setOnClickListener(v -> loadFragment(new ProfileFragment(), navProfile));
 
-        // Inicializamos el menú lateral dinámico
-        setupSideSheetLogic();
-
+        // Cargar inicio por defecto
         if (savedInstanceState == null) {
             loadFragment(new HomeFragment(), navHome);
         }
     }
 
-    private void setupSideSheetLogic() {
-        btnToggleMen = findViewById(R.id.btnToggleMen);
-        btnToggleWomen = findViewById(R.id.btnToggleWomen);
-        rvSideBrands = findViewById(R.id.rvSideBrands);
-
-        if (btnToggleMen != null) btnToggleMen.setOnClickListener(v -> updateGenderVisuals("Man"));
-        if (btnToggleWomen != null) btnToggleWomen.setOnClickListener(v -> updateGenderVisuals("Woman"));
-
-        if (btnToggleMen != null) updateGenderVisuals("Man");
-
-        // Cargamos las marcas desde Firebase
-        cargarMarcasEnSideMenu();
-    }
-
-    // MÉTODO NUEVO: Cargar marcas únicas desde la BD
-    private void cargarMarcasEnSideMenu() {
-        if (rvSideBrands == null) return;
-
-        DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("sneakers");
-        rvSideBrands.setLayoutManager(new LinearLayoutManager(this));
-
-        dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
+    private void cargarMarcas() {
+        FirebaseDatabase.getInstance().getReference("brands").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Set<String> marcasUnicas = new HashSet<>();
-
-                for (DataSnapshot data : snapshot.getChildren()) {
-                    String brand = data.child("brand").getValue(String.class);
-                    if (brand != null && !brand.trim().isEmpty()) {
-                        marcasUnicas.add(brand);
-                    }
+                brandList.clear();
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    Brand b = ds.getValue(Brand.class);
+                    if (b != null) { b.setId(ds.getKey()); brandList.add(b); }
                 }
-
-                // Pasamos el Set a una Lista y la ordenamos alfabéticamente
-                List<String> marcasLista = new ArrayList<>(marcasUnicas);
-                Collections.sort(marcasLista);
-
-                // Inicializamos el adaptador
-                BrandSideAdapter adapter = new BrandSideAdapter(marcasLista, brand -> {
-                    navigateToFilter(brand);
-                });
-
-                rvSideBrands.setAdapter(adapter);
+                Collections.sort(brandList, (b1, b2) -> b1.getName().compareToIgnoreCase(b2.getName()));
+                brandAdapter.notifyDataSetChanged();
             }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(MainActivity.this, "Error cargando marcas", Toast.LENGTH_SHORT).show();
-            }
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
-    private void updateGenderVisuals(String gender) {
-        currentGenderFilter = gender;
-        if (btnToggleMen == null || btnToggleWomen == null) return;
-
-        int pLeft = btnToggleMen.getPaddingLeft();
-        int pTop = btnToggleMen.getPaddingTop();
-        int pRight = btnToggleMen.getPaddingRight();
-        int pBottom = btnToggleMen.getPaddingBottom();
-
-        // COLORES DINÁMICOS BASADOS EN TU NUEVO XML
-        int colorActive = ContextCompat.getColor(this, R.color.color_6); // Negro en claro, Blanco en oscuro
-        int colorInactive = ContextCompat.getColor(this, R.color.color_2); // Gris secundario
-
-        if (gender.equals("Man")) {
-            btnToggleMen.setBackgroundResource(R.drawable.bg_brand_item);
-            btnToggleMen.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.white)); // Blanco en claro, Gris oscuro en oscuro
-            btnToggleMen.setTextColor(colorActive);
-            btnToggleMen.setElevation(8f);
-
-            btnToggleWomen.setBackground(null);
-            btnToggleWomen.setTextColor(colorInactive);
-            btnToggleWomen.setElevation(0f);
-        } else {
-            btnToggleWomen.setBackgroundResource(R.drawable.bg_brand_item);
-            btnToggleWomen.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.white));
-            btnToggleWomen.setTextColor(colorActive);
-            btnToggleWomen.setElevation(8f);
-
-            btnToggleMen.setBackground(null);
-            btnToggleMen.setTextColor(colorInactive);
-            btnToggleMen.setElevation(0f);
-        }
-
-        btnToggleMen.setPadding(pLeft, pTop, pRight, pBottom);
-        btnToggleWomen.setPadding(pLeft, pTop, pRight, pBottom);
+    private void configurarBotonesGenero() {
+        btnToggleMen.setOnClickListener(v -> { selectedGender = "Man"; actualizarEstiloBotones(btnToggleMen, btnToggleWomen); });
+        btnToggleWomen.setOnClickListener(v -> { selectedGender = "Woman"; actualizarEstiloBotones(btnToggleWomen, btnToggleMen); });
     }
 
-    private void navigateToFilter(String brand) {
-        drawerLayout.closeDrawer(GravityCompat.START);
-
-        SearchFragment fragment = new SearchFragment();
-        Bundle args = new Bundle();
-        args.putString("BRAND", brand);
-        args.putString("GENDER", currentGenderFilter);
-        fragment.setArguments(args);
-
-        loadFragment(fragment, navSearch);
-        Toast.makeText(this, "Filtrando: " + brand + " (" + currentGenderFilter + ")", Toast.LENGTH_SHORT).show();
+    private void actualizarEstiloBotones(TextView sel, TextView desel) {
+        sel.setBackgroundResource(R.drawable.bg_brand_item);
+        sel.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.white));
+        sel.setTextColor(ContextCompat.getColor(this, R.color.color_6));
+        sel.setElevation(2f);
+        desel.setBackground(null);
+        desel.setTextColor(ContextCompat.getColor(this, R.color.color_2));
+        desel.setElevation(0f);
     }
 
-    private void loadFragment(Fragment fragment, ImageView activeIcon) {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.fragmentContainer, fragment)
-                .commit();
-        updateIconColors(activeIcon);
+    // --- LÓGICA DE NAVEGACIÓN RESTAURADA COMPLETAMENTE ---
+    public void loadFragment(Fragment fragment, ImageView activeIcon) {
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragmentContainer, fragment).commit();
 
-        View topBar = findViewById(R.id.topBar);
+        if (activeIcon != null) updateIconColors(activeIcon);
 
         if (topBar != null) {
-            if (fragment instanceof SearchFragment) {
+            if (fragment instanceof SearchFragment ||
+                    fragment instanceof DetailFragment ||
+                    fragment instanceof SuccessFragment ||
+                    fragment instanceof OrderDetailFragment) {
                 topBar.setVisibility(View.GONE);
-                configurarBarra(Color.TRANSPARENT, true);
             } else {
                 topBar.setVisibility(View.VISIBLE);
-                configurarBarra(Color.TRANSPARENT, false);
             }
         }
+        configurarBarraEstado(true);
     }
 
     private void updateIconColors(ImageView activeIcon) {
-        int colorActive = ContextCompat.getColor(this, R.color.color_6); // Tu negro/blanco principal
+        int colorActive = ContextCompat.getColor(this, R.color.color_6);
         int colorInactive = ContextCompat.getColor(this, R.color.color_2);
-
         navHome.setColorFilter(colorInactive);
         navSearch.setColorFilter(colorInactive);
         navCart.setColorFilter(colorInactive);
         navProfile.setColorFilter(colorInactive);
-
-        if (activeIcon != null) {
-            activeIcon.setColorFilter(colorActive);
-        }
+        activeIcon.setColorFilter(colorActive);
     }
 
-    private void configurarBarra(int colorFondo, boolean iconosNegros) {
+    private void configurarBarraEstado(boolean iconosNegros) {
         Window window = getWindow();
         window.setStatusBarColor(Color.TRANSPARENT);
-        window.setNavigationBarColor(Color.TRANSPARENT);
-
-        View decorView = window.getDecorView();
-        if (iconosNegros) {
-            decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
-        } else {
-            decorView.setSystemUiVisibility(0);
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, window.getDecorView());
+        if (controller != null) {
+            controller.setAppearanceLightStatusBars(iconosNegros);
         }
     }
 }

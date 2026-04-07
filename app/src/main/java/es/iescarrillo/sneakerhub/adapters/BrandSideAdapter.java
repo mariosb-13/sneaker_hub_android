@@ -1,31 +1,28 @@
 package es.iescarrillo.sneakerhub.adapters;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-
 import java.util.List;
 import es.iescarrillo.sneakerhub.R;
+import es.iescarrillo.sneakerhub.models.Brand;
 
 public class BrandSideAdapter extends RecyclerView.Adapter<BrandSideAdapter.BrandViewHolder> {
 
-    private List<String> brandList;
+    private List<Brand> brandList;
     private OnBrandClickListener listener;
+    private String selectedBrandName = "";
 
-    public interface OnBrandClickListener {
-        void onBrandClick(String brand);
-    }
+    public interface OnBrandClickListener { void onBrandClick(Brand brand); }
 
-    public BrandSideAdapter(List<String> brandList, OnBrandClickListener listener) {
+    public BrandSideAdapter(List<Brand> brandList, OnBrandClickListener listener) {
         this.brandList = brandList;
         this.listener = listener;
     }
@@ -33,48 +30,51 @@ public class BrandSideAdapter extends RecyclerView.Adapter<BrandSideAdapter.Bran
     @NonNull
     @Override
     public BrandViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_side_brand, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_filter_pill, parent, false);
         return new BrandViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull BrandViewHolder holder, int position) {
-        String brand = brandList.get(position);
-        holder.tvBrandName.setText(brand);
-        holder.itemView.setOnClickListener(v -> listener.onBrandClick(brand));
+        Brand brand = brandList.get(position);
 
-        // Aplicamos la magia del color dinámico al ImageView
-        int tintColor = ContextCompat.getColor(holder.itemView.getContext(), R.color.color_6);
-        holder.ivBrandIcon.setColorFilter(tintColor, android.graphics.PorterDuff.Mode.SRC_IN);
+        // ENCENDEMOS LA IMAGEN y apagamos el texto
+        holder.ivPillIcon.setVisibility(View.VISIBLE);
+        holder.tvPillName.setVisibility(View.GONE);
 
-        String fileName = brand.replace(" ", "") + ".png";
+        // Cargamos el logo con Glide
+        Glide.with(holder.itemView.getContext())
+                .load(brand.getIcon())
+                .into(holder.ivPillIcon);
 
-        StorageReference logoRef = FirebaseStorage.getInstance().getReference().child("brand_logos/" + fileName);
+        if (selectedBrandName.equals(brand.getName())) {
+            holder.lyPillRoot.setBackgroundTintList(ContextCompat.getColorStateList(holder.itemView.getContext(), R.color.color_6));
+            holder.ivPillIcon.setColorFilter(Color.WHITE);
+        } else {
+            holder.lyPillRoot.setBackgroundTintList(ContextCompat.getColorStateList(holder.itemView.getContext(), R.color.color_5));
+            holder.ivPillIcon.clearColorFilter();
+        }
 
-        // 3. Descargamos con Glide
-        logoRef.getDownloadUrl().addOnSuccessListener(uri -> {
-            Glide.with(holder.itemView.getContext())
-                    .load(uri)
-                    .into(holder.ivBrandIcon);
-        }).addOnFailureListener(e -> {
-            // Si falla, icono por defecto
-            holder.ivBrandIcon.setImageResource(R.drawable.ic_search);
+        holder.itemView.setOnClickListener(v -> {
+            selectedBrandName = brand.getName();
+            notifyDataSetChanged();
+            listener.onBrandClick(brand);
         });
     }
 
     @Override
-    public int getItemCount() {
-        return brandList.size();
-    }
+    public int getItemCount() { return brandList.size(); }
 
     public static class BrandViewHolder extends RecyclerView.ViewHolder {
-        TextView tvBrandName;
-        ImageView ivBrandIcon;
+        LinearLayout lyPillRoot;
+        ImageView ivPillIcon;
+        android.widget.TextView tvPillName;
 
         public BrandViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvBrandName = itemView.findViewById(R.id.tvBrandName);
-            ivBrandIcon = itemView.findViewById(R.id.ivBrandIcon);
+            lyPillRoot = itemView.findViewById(R.id.lyPillRoot);
+            ivPillIcon = itemView.findViewById(R.id.ivPillIcon);
+            tvPillName = itemView.findViewById(R.id.tvPillName);
         }
     }
 }

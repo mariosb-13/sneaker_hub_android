@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@color/color_5">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Datos de Envío"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/app_font"
+        android:textColor="@color/color_6"
+        android:layout_marginBottom="16dp"/>
+
+    <EditText
+        android:id="@+id/etDialogZip"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Código Postal"
+        android:inputType="number"
+        android:paddingHorizontal="16dp"
+        android:background="@drawable/bg_brand_item"
+        android:backgroundTint="@color/white"
+        android:layout_marginBottom="12dp"
+        android:textSize="14sp"/>
+
+    <EditText
+        android:id="@+id/etDialogCity"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Ciudad"
+        android:paddingHorizontal="16dp"
+        android:background="@drawable/bg_brand_item"
+        android:backgroundTint="@color/white"
+        android:layout_marginBottom="12dp"
+        android:textSize="14sp"/>
+
+    <EditText
+        android:id="@+id/etDialogStreet"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Calle y N.º"
+        android:paddingHorizontal="16dp"
+        android:background="@drawable/bg_brand_item"
+        android:backgroundTint="@color/white"
+        android:layout_marginBottom="12dp"
+        android:textSize="14sp"/>
+
+    <EditText
+        android:id="@+id/etDialogDoor"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Piso, Bloque, Puerta"
+        android:paddingHorizontal="16dp"
+        android:background="@drawable/bg_brand_item"
+        android:backgroundTint="@color/white"
+        android:layout_marginBottom="24dp"
+        android:textSize="14sp"/>
+
+    <Button
+        android:id="@+id/btnConfirmAddress"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:text="FINALIZAR PEDIDO"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:backgroundTint="@color/color_6"/>
+</LinearLayout>

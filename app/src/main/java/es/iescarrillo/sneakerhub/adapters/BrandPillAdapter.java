@@ -24,7 +24,7 @@ public class BrandPillAdapter extends RecyclerView.Adapter<BrandPillAdapter.Pill
 
     private List<String> brandList;
     private OnPillClickListener listener;
-    private int selectedPosition = 0; // Por defecto, la primera marca está seleccionada
+    private int selectedPosition = 0;
 
     public interface OnPillClickListener {
         void onPillClick(String brand);
@@ -38,7 +38,7 @@ public class BrandPillAdapter extends RecyclerView.Adapter<BrandPillAdapter.Pill
     @NonNull
     @Override
     public PillViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_home_brand_pill, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_brand_pill, parent, false);
         return new PillViewHolder(view);
     }
 
@@ -50,7 +50,7 @@ public class BrandPillAdapter extends RecyclerView.Adapter<BrandPillAdapter.Pill
         // Ponemos el nombre de la marca
         holder.tvPillName.setText(brand);
 
-        // 🔥 LÓGICA DE EXPANSIÓN Y COLORES 🔥
+        // LÓGICA DE EXPANSIÓN Y COLORES
         if (isSelected) {
             // SELECCIONADO: Fondo invertido (color_6), Logo y Texto blancos
             holder.lyPillRoot.setBackgroundTintList(ContextCompat.getColorStateList(holder.itemView.getContext(), R.color.color_6));

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/lyPillRoot"
+    android:layout_width="match_parent"
+    android:layout_height="45dp"
+    android:layout_margin="6dp"
+    android:background="@drawable/bg_brand_pills"
+    android:backgroundTint="@color/color_5"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:elevation="1dp">
+
+    <ImageView
+        android:id="@+id/ivPillIcon"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_marginHorizontal="8dp"
+        android:scaleType="centerInside"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvPillName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/app_font"
+        android:text="Filtro"
+        android:textColor="@color/color_6"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+</LinearLayout>

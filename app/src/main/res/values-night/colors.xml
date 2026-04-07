@@ -14,4 +14,7 @@
     <color name="color_5">#333333</color>
 
     <color name="trending_card_bg">#333333</color>
+
+    <color name="always_white">#FFFFFF</color>
+
 </resources>

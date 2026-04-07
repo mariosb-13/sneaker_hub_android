@@ -27,7 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:layout_marginHorizontal="20dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="50dp"
             android:background="@drawable/bg_floating_bar"
             android:elevation="10dp"
             android:translationZ="10dp"
@@ -37,7 +37,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
-                android:id="@+id/ivMenu"
+                android:id="@+id/ivMenuGlobal"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:src="@drawable/ic_menu_burger"
@@ -53,7 +53,7 @@
                 android:src="@drawable/logo_app"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/ivMenu"
+                app:layout_constraintStart_toEndOf="@id/ivMenuGlobal"
                 app:layout_constraintTop_toTopOf="parent"
                 app:tint="@color/color_6" />
         </androidx.constraintlayout.widget.ConstraintLayout>
