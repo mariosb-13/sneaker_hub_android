@@ -1,12 +1,15 @@
 package es.iescarrillo.sneakerhub.adapters;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import java.util.List;
@@ -19,9 +22,7 @@ public class SneakerAdapter extends RecyclerView.Adapter<SneakerAdapter.SneakerV
     private Context context;
     private final OnItemClickListener listener;
 
-    public interface OnItemClickListener {
-        void onItemClick(Sneaker sneaker);
-    }
+    public interface OnItemClickListener { void onItemClick(Sneaker sneaker); }
 
     public SneakerAdapter(List<Sneaker> sneakerList, Context context, OnItemClickListener listener) {
         this.sneakerList = sneakerList;
@@ -32,49 +33,50 @@ public class SneakerAdapter extends RecyclerView.Adapter<SneakerAdapter.SneakerV
     @NonNull
     @Override
     public SneakerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_sneaker, parent, false);
+        View view = LayoutInflater.from(context).inflate(R.layout.item_sneaker, parent, false);
         return new SneakerViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull SneakerViewHolder holder, int position) {
         Sneaker sneaker = sneakerList.get(position);
-
         holder.tvName.setText(sneaker.getName());
         holder.tvBrand.setText(sneaker.getBrand());
-        holder.tvPrice.setText(String.format("%.2f €", sneaker.getPrice()));
+        Glide.with(context).load(sneaker.getImageUrl()).into(holder.ivSneaker);
 
-        // AQUÍ ESTABA EL FALLO: Usamos el nombre original de tu base de datos
-        String imageUrl = sneaker.getImageUrl();
-
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            Glide.with(context)
-                    .load(imageUrl)
-                    .placeholder(R.drawable.logo_app)
-                    .error(R.drawable.logo_app)
-                    .into(holder.ivSneaker);
+        Sneaker.Discount discount = sneaker.getDiscount();
+        if (discount != null && discount.isActive() && discount.getPercentage() > 0) {
+            double finalPrice = sneaker.getPrice() - (sneaker.getPrice() * (discount.getPercentage() / 100.0));
+            holder.tvDiscountBadge.setVisibility(View.VISIBLE);
+            holder.tvDiscountBadge.setText("-" + discount.getPercentage() + "%");
+            holder.tvOriginalPrice.setVisibility(View.VISIBLE);
+            holder.tvOriginalPrice.setText(String.format("%.2f €", sneaker.getPrice()));
+            holder.tvOriginalPrice.setPaintFlags(holder.tvOriginalPrice.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            holder.tvPrice.setText(String.format("%.2f €", finalPrice));
+            holder.tvPrice.setTextColor(Color.parseColor("#E53935"));
         } else {
-            holder.ivSneaker.setImageResource(R.drawable.logo_app);
+            holder.tvDiscountBadge.setVisibility(View.GONE);
+            holder.tvOriginalPrice.setVisibility(View.GONE);
+            holder.tvPrice.setText(String.format("%.2f €", sneaker.getPrice()));
+            holder.tvPrice.setTextColor(ContextCompat.getColor(context, R.color.color_1));
         }
 
-        holder.itemView.setOnClickListener(v -> {
-            if (listener != null) listener.onItemClick(sneaker);
-        });
+        holder.itemView.setOnClickListener(v -> listener.onItemClick(sneaker));
     }
 
-    @Override
-    public int getItemCount() { return sneakerList.size(); }
+    @Override public int getItemCount() { return sneakerList.size(); }
 
     public static class SneakerViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName, tvBrand, tvPrice;
+        TextView tvName, tvBrand, tvPrice, tvDiscountBadge, tvOriginalPrice;
         ImageView ivSneaker;
-
         public SneakerViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvName);
             tvBrand = itemView.findViewById(R.id.tvBrand);
             tvPrice = itemView.findViewById(R.id.tvPrice);
             ivSneaker = itemView.findViewById(R.id.ivSneaker);
+            tvDiscountBadge = itemView.findViewById(R.id.tvDiscountBadge);
+            tvOriginalPrice = itemView.findViewById(R.id.tvOriginalPrice);
         }
     }
 }

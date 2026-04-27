@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -37,12 +38,13 @@ public class SearchFragment extends Fragment {
     private List<Sneaker> fullFilteredList;
     private View layoutLoadingSearch;
     private EditText etSearch;
+    private LinearLayout llNoResults;
 
-    // CORRECCIÓN 3: Declaramos TODAS las variables de filtro aquí arriba
-    private String brandFilter = null;
+    // AHORA LAS MARCAS Y TALLAS SON LISTAS, NO STRINGS SIMPLES
+    private List<String> brandFilters = new ArrayList<>();
+    private List<String> sizeFilters = new ArrayList<>();
     private String genderFilter = null;
-    private int priceFilter = 10000; // Valor alto por defecto para que muestre todo
-    private String sizeFilter = null;
+    private int priceFilter = 10000;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -56,21 +58,31 @@ public class SearchFragment extends Fragment {
         rvSneakers = view.findViewById(R.id.rvSneakers);
         etSearch = view.findViewById(R.id.etSearch);
         layoutLoadingSearch = view.findViewById(R.id.layoutLoadingSearch);
+        llNoResults = view.findViewById(R.id.llNoResults);
 
         sneakerList = new ArrayList<>();
         fullFilteredList = new ArrayList<>();
         rvSneakers.setLayoutManager(new GridLayoutManager(requireContext(), 2));
 
-        // Capturamos TODOS los filtros enviados desde MainActivity
+        // CAPTURAMOS LOS FILTROS CORRECTAMENTE
         if (getArguments() != null) {
-            brandFilter = getArguments().getString("filterBrand");
+            ArrayList<String> brands = getArguments().getStringArrayList("filterBrands");
+            if (brands != null) brandFilters = brands;
+
+            ArrayList<String> sizes = getArguments().getStringArrayList("filterSizes");
+            if (sizes != null) sizeFilters = sizes;
+
             genderFilter = getArguments().getString("filterGender");
             priceFilter = getArguments().getInt("filterPrice", 10000);
-            sizeFilter = getArguments().getString("filterSize");
         }
 
         adapter = new SneakerAdapter(sneakerList, requireContext(), sneaker -> {
-            DetailFragment detail = new DetailFragment(sneaker);
+            DetailFragment detail = new DetailFragment();
+            // Aseguramos que se pase la zapatilla al detalle
+            Bundle bundle = new Bundle();
+            bundle.putSerializable("sneaker", sneaker);
+            detail.setArguments(bundle);
+
             getParentFragmentManager().beginTransaction()
                     .replace(R.id.fragmentContainer, detail)
                     .addToBackStack(null).commit();
@@ -128,28 +140,62 @@ public class SearchFragment extends Fragment {
             String sBrand = (s.getBrand() != null) ? s.getBrand() : "";
             String sGender = (s.getGender() != null) ? s.getGender() : "";
 
-            // CORRECCIÓN 1: Leemos el precio como double
+            // Calcular precio final (con descuento si lo hay)
             double sPrice = s.getPrice();
-
-            // CORRECCIÓN 2: Forma segura de comprobar tallas ignorando si es List<Double> o List<String>
-            boolean coincideTalla = true;
-            if (sizeFilter != null && !sizeFilter.isEmpty() && s.getSizes() != null) {
-                // Pasamos la lista a texto para buscar la talla (ej: "42" dentro de "[38.0, 42.0, 45.0]")
-                String stringTallas = s.getSizes().toString();
-                coincideTalla = stringTallas.contains(sizeFilter);
+            if (s.getDiscount() != null && s.getDiscount().isActive()) {
+                sPrice = sPrice * (1 - (s.getDiscount().getPercentage() / 100.0));
             }
 
-            boolean coincideTexto = query.isEmpty() || sName.contains(query) || sBrand.toLowerCase().contains(query);
-            boolean coincideMarca = (brandFilter == null || brandFilter.isEmpty() || sBrand.equalsIgnoreCase(brandFilter.trim()));
-            boolean coincideGenero = (genderFilter == null || genderFilter.isEmpty() || sGender.equalsIgnoreCase(genderFilter.trim()));
+            // 1. TALLAS: Comprobamos si la zapatilla tiene ALGUNA de las tallas marcadas
+            boolean coincideTalla = true;
+            if (!sizeFilters.isEmpty()) {
+                coincideTalla = false;
+                if (s.getSizes() != null) {
+                    for (String size : sizeFilters) {
+                        String safeSize = size.replace(".", "_");
+                        // Si tiene stock de cualquiera de las tallas seleccionadas, nos vale
+                        if (s.getSizes().containsKey(safeSize) && s.getSizes().get(safeSize) != null && s.getSizes().get(safeSize) > 0) {
+                            coincideTalla = true;
+                            break;
+                        }
+                    }
+                }
+            }
 
-            // Comparamos el double con el int del filtro
+            // 2. MARCAS: Comprobamos si es de ALGUNA de las marcas marcadas
+            boolean coincideMarca = true;
+            if (!brandFilters.isEmpty()) {
+                coincideMarca = false;
+                for (String b : brandFilters) {
+                    if (sBrand.equalsIgnoreCase(b.trim())) {
+                        coincideMarca = true;
+                        break;
+                    }
+                }
+            }
+
+            // Filtros clásicos
+            boolean coincideTexto = query.isEmpty() || sName.contains(query) || sBrand.toLowerCase().contains(query);
+            boolean coincideGenero = (genderFilter == null || genderFilter.isEmpty() || sGender.equalsIgnoreCase(genderFilter.trim()));
             boolean coincidePrecio = (sPrice <= priceFilter);
 
+            // Si cumple todas las condiciones, se añade
             if (coincideTexto && coincideMarca && coincideGenero && coincidePrecio && coincideTalla) {
                 sneakerList.add(s);
             }
         }
+
         adapter.notifyDataSetChanged();
+
+        // Controlar pantalla vacía
+        if (llNoResults != null) {
+            if (sneakerList.isEmpty()) {
+                llNoResults.setVisibility(View.VISIBLE);
+                rvSneakers.setVisibility(View.GONE);
+            } else {
+                llNoResults.setVisibility(View.GONE);
+                rvSneakers.setVisibility(View.VISIBLE);
+            }
+        }
     }
 }

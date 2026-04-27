@@ -30,7 +30,6 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import es.iescarrillo.sneakerhub.R;
-import es.iescarrillo.sneakerhub.ui.WelcomeActivity; // Asegúrate de tener este import
 
 public class ProfileFragment extends Fragment {
 
@@ -94,7 +93,7 @@ public class ProfileFragment extends Fragment {
                 imagePickerLauncher.launch(intent);
             });
 
-            // --- NAVEGACIÓN AL HISTORIAL DE PEDIDOS ---
+            // NAVEGACIÓN AL HISTORIAL DE PEDIDOS
             btnOrderHistory.setOnClickListener(v -> {
                 getParentFragmentManager().beginTransaction()
                         .setCustomAnimations(R.anim.fade_in, R.anim.fade_out, R.anim.fade_in, R.anim.fade_out)
@@ -123,6 +122,14 @@ public class ProfileFragment extends Fragment {
         btnEditProfile.setOnClickListener(v -> {
             getParentFragmentManager().beginTransaction()
                     .replace(R.id.fragmentContainer, new ProfileEditFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
+
+        // NAVEGACIÓN A LOS AJUSTES (SettingsFragment)
+        btnSettings.setOnClickListener(v -> {
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragmentContainer, new SettingsFragment())
                     .addToBackStack(null)
                     .commit();
         });
@@ -192,4 +199,5 @@ public class ProfileFragment extends Fragment {
         super.onResume();
         ocultarTopBar(true);
     }
+
 }

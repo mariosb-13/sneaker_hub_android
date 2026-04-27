@@ -20,10 +20,12 @@ import es.iescarrillo.sneakerhub.R;
 import es.iescarrillo.sneakerhub.adapters.BrandPillAdapter;
 import es.iescarrillo.sneakerhub.adapters.TrendingSneakerAdapter;
 import es.iescarrillo.sneakerhub.models.Sneaker;
+// IMPORTANTE: Asegúrate de tener un modelo Brand o cambiar el import si se llama diferente
+import es.iescarrillo.sneakerhub.models.Brand;
 
 public class HomeFragment extends Fragment {
 
-    private TextView tvGreeting, tvTrendingTitle;
+    private TextView tvGreeting, tvTrendingTitle, tvEmptyTrending;
     private RecyclerView rvHomeBrands, rvTrendingSneakers;
     private View layoutLoadingHome;
     private TrendingSneakerAdapter trendingAdapter;
@@ -42,7 +44,10 @@ public class HomeFragment extends Fragment {
         rvHomeBrands = view.findViewById(R.id.rvHomeBrands);
         rvTrendingSneakers = view.findViewById(R.id.rvTrendingSneakers);
         layoutLoadingHome = view.findViewById(R.id.layoutLoadingHome);
+        tvEmptyTrending = view.findViewById(R.id.tvEmptyTrending);
         trendingSneakerList = new ArrayList<>();
+
+        if (tvGreeting != null) tvGreeting.setText("");
 
         setupTrendingRecyclerView();
         loadUserName();
@@ -50,15 +55,24 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupTrendingRecyclerView() {
+        if (rvTrendingSneakers == null) return;
+
         rvTrendingSneakers.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        trendingAdapter = new TrendingSneakerAdapter(trendingSneakerList, getContext(), sneaker -> {
-            // NAVEGACIÓN DIRECTA
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainer, new DetailFragment(sneaker))
-                    .addToBackStack(null)
-                    .commit();
-        });
-        rvTrendingSneakers.setAdapter(trendingAdapter);
+
+        if (getContext() != null) {
+            trendingAdapter = new TrendingSneakerAdapter(trendingSneakerList, getContext(), sneaker -> {
+                DetailFragment detailFragment = new DetailFragment();
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("sneaker", sneaker);
+                detailFragment.setArguments(bundle);
+
+                getParentFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, detailFragment)
+                        .addToBackStack(null)
+                        .commit();
+            });
+            rvTrendingSneakers.setAdapter(trendingAdapter);
+        }
     }
 
     private void loadBrandPills() {
@@ -67,16 +81,26 @@ public class HomeFragment extends Fragment {
         dbRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                List<String> marcasLista = new ArrayList<>();
+                // Guardamos objetos Brand enteros
+                List<Brand> marcasLista = new ArrayList<>();
                 for (DataSnapshot data : snapshot.getChildren()) {
-                    String brandName = data.child("name").getValue(String.class);
-                    if (brandName != null) marcasLista.add(brandName);
+                    Brand brand = data.getValue(Brand.class);
+                    if (brand != null && brand.getName() != null) {
+                        marcasLista.add(brand);
+                    }
                 }
-                Collections.sort(marcasLista);
-                rvHomeBrands.setAdapter(new BrandPillAdapter(marcasLista, brand -> loadTrendingSneakers(brand)));
 
-                if (!marcasLista.isEmpty()) loadTrendingSneakers(marcasLista.get(0));
-                else if (layoutLoadingHome != null) layoutLoadingHome.setVisibility(View.GONE);
+                // Ordenamos alfabéticamente por nombre
+                Collections.sort(marcasLista, (b1, b2) -> b1.getName().compareToIgnoreCase(b2.getName()));
+
+                // Le pasamos la lista de objetos al Adapter. Al hacer clic, le pasamos el nombre para filtrar las zapas
+                rvHomeBrands.setAdapter(new BrandPillAdapter(marcasLista, brand -> loadTrendingSneakers(brand.getName())));
+
+                if (!marcasLista.isEmpty()) {
+                    loadTrendingSneakers(marcasLista.get(0).getName());
+                } else {
+                    if (layoutLoadingHome != null) layoutLoadingHome.setVisibility(View.GONE);
+                }
             }
             @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
@@ -93,7 +117,6 @@ public class HomeFragment extends Fragment {
                     Sneaker sneaker = data.getValue(Sneaker.class);
                     if (sneaker != null) {
                         sneaker.setId(data.getKey());
-                        // FILTRAR POR MARCA Y TRENDING
                         if (sneaker.getBrand() != null &&
                                 sneaker.getBrand().equalsIgnoreCase(selectedBrand) &&
                                 sneaker.isTrending()) {
@@ -102,21 +125,41 @@ public class HomeFragment extends Fragment {
                     }
                 }
                 trendingAdapter.notifyDataSetChanged();
+
+                if (trendingSneakerList.isEmpty()) {
+                    if (rvTrendingSneakers != null) rvTrendingSneakers.setVisibility(View.GONE);
+                    if (tvEmptyTrending != null) {
+                        tvEmptyTrending.setVisibility(View.VISIBLE);
+                        tvEmptyTrending.setText("Aún no tenemos tendencias de " + selectedBrand + " publicadas.");
+                    }
+                } else {
+                    // Si hay zapatillas, mostramos la lista y ocultamos el texto
+                    if (rvTrendingSneakers != null) rvTrendingSneakers.setVisibility(View.VISIBLE);
+                    if (tvEmptyTrending != null) tvEmptyTrending.setVisibility(View.GONE);
+                }
+
                 if (layoutLoadingHome != null) layoutLoadingHome.setVisibility(View.GONE);
             }
+
             @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
     private void loadUserName() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid()).get().addOnCompleteListener(task -> {
-                if (task.isSuccessful() && task.getResult().exists() && tvGreeting != null) {
-                    String name = task.getResult().child("fullName").getValue(String.class);
-                    tvGreeting.setText("Buenas Tardes\n" + name + "...");
-                }
-            });
+        if (currentUser == null) {
+            if (tvGreeting != null) tvGreeting.setText("Buenas Tardes,\nInvitado");
+            return;
         }
+
+        FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid()).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult().exists() && tvGreeting != null) {
+                String name = task.getResult().child("fullName").getValue(String.class);
+                String displayName = (name != null) ? name : "Usuario";
+                tvGreeting.setText("Buenas Tardes,\n" + displayName);
+            } else if (tvGreeting != null) {
+                tvGreeting.setText("Buenas Tardes,\nUsuario");
+            }
+        });
     }
 }

@@ -1,5 +1,6 @@
 package es.iescarrillo.sneakerhub.ui;
 
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -39,7 +40,7 @@ import es.iescarrillo.sneakerhub.models.Sneaker;
 public class DetailFragment extends Fragment {
 
     private ImageView ivDetailImage;
-    private TextView tvDetailBrand, tvDetailName, tvDetailPrice;
+    private TextView tvDetailBrand, tvDetailName, tvDetailPrice, tvDetailOriginalPrice, tvDetailDiscountBadge;
     private LinearLayout layoutSizesContainer;
     private Button btnAddToCart;
     private SeekBar seekBar360;
@@ -54,10 +55,6 @@ public class DetailFragment extends Fragment {
 
     public DetailFragment() {}
 
-    public DetailFragment(Sneaker sneaker) {
-        this.sneaker = sneaker;
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_detail, container, false);
@@ -67,64 +64,103 @@ public class DetailFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        if (getArguments() != null) {
+            sneaker = (Sneaker) getArguments().getSerializable("sneaker");
+        }
+
+        if (sneaker == null) return;
+
         ivDetailImage = view.findViewById(R.id.ivDetailImage);
         tvDetailBrand = view.findViewById(R.id.tvDetailBrand);
         tvDetailName = view.findViewById(R.id.tvDetailName);
         tvDetailPrice = view.findViewById(R.id.tvDetailPrice);
+        tvDetailOriginalPrice = view.findViewById(R.id.tvDetailOriginalPrice);
+        tvDetailDiscountBadge = view.findViewById(R.id.tvDetailDiscountBadge);
         layoutSizesContainer = view.findViewById(R.id.layoutSizesContainer);
         btnAddToCart = view.findViewById(R.id.btnAddToCart);
         seekBar360 = view.findViewById(R.id.seekBar360);
 
-        if (sneaker == null) return;
-
         tvDetailName.setText(sneaker.getName());
         tvDetailBrand.setText(sneaker.getBrand());
-        tvDetailPrice.setText(String.format("%.2f €", sneaker.getPrice()));
 
-        if (sneaker.getImageUrl() != null && isAdded()) {
-            Glide.with(this)
-                    .load(sneaker.getImageUrl())
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .into(ivDetailImage);
+        // --- LÓGICA DE DESCUENTOS VISUAL EN EL DETALLE ---
+        double originalPrice = sneaker.getPrice();
+        double finalPrice = originalPrice;
+
+        if (sneaker.getDiscount() != null && sneaker.getDiscount().isActive() && sneaker.getDiscount().getPercentage() > 0) {
+            int pct = sneaker.getDiscount().getPercentage();
+            finalPrice = originalPrice - (originalPrice * (pct / 100.0));
+
+            tvDetailDiscountBadge.setVisibility(View.VISIBLE);
+            tvDetailDiscountBadge.setText("-" + pct + "%");
+
+            tvDetailOriginalPrice.setVisibility(View.VISIBLE);
+            tvDetailOriginalPrice.setText(String.format("%.2f €", originalPrice));
+            tvDetailOriginalPrice.setPaintFlags(tvDetailOriginalPrice.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+
+            tvDetailPrice.setText(String.format("%.2f €", finalPrice));
+            tvDetailPrice.setTextColor(android.graphics.Color.parseColor("#E53935"));
+        } else {
+            tvDetailDiscountBadge.setVisibility(View.GONE);
+            tvDetailOriginalPrice.setVisibility(View.GONE);
+            tvDetailPrice.setText(String.format("%.2f €", originalPrice));
+            tvDetailPrice.setTextColor(ContextCompat.getColor(requireContext(), R.color.color_6));
         }
 
-        // --- MAGIA 1: EXTRAER Y ORDENAR TALLAS DE MENOR A MAYOR ---
+        if (sneaker.getImageUrl() != null && isAdded()) {
+            Glide.with(this).load(sneaker.getImageUrl()).diskCacheStrategy(DiskCacheStrategy.ALL).into(ivDetailImage);
+        }
+
         if (sneaker.getSizes() != null) {
             List<String> tallasList = new ArrayList<>(sneaker.getSizes().keySet());
-
             Collections.sort(tallasList, (s1, s2) -> {
-                // Cambiamos el _ por . solo para comparar numéricamente (ej. 42_5 -> 42.5)
                 String val1 = s1.replace("_", ".");
                 String val2 = s2.replace("_", ".");
                 try {
                     return Double.compare(Double.parseDouble(val1), Double.parseDouble(val2));
                 } catch (NumberFormatException e) {
-                    return val1.compareTo(val2); // Por si alguna talla es letra (S, M, L)
+                    return val1.compareTo(val2);
                 }
             });
-
             cargarTallas(tallasList);
         }
 
-        images360List = sneaker.getImages360();
-        if (images360List != null && !images360List.isEmpty()) {
+        // 360 Logic
+        images360List = new ArrayList<>();
+        Object rawImages = sneaker.getImages360();
+        if (rawImages != null) {
+            if (rawImages instanceof List) {
+                for (Object item : (List<?>) rawImages) {
+                    if (item != null && !item.toString().trim().isEmpty()) images360List.add(item.toString());
+                }
+            } else if (rawImages instanceof Map) {
+                Map<?, ?> map = (Map<?, ?>) rawImages;
+                List<String> keys = new ArrayList<>();
+                for (Object k : map.keySet()) keys.add(k.toString());
+                Collections.sort(keys, (a, b) -> {
+                    try { return Integer.compare(Integer.parseInt(a), Integer.parseInt(b)); }
+                    catch (NumberFormatException e) { return a.compareTo(b); }
+                });
+                for (String key : keys) {
+                    Object val = map.get(key);
+                    if (val != null && !val.toString().trim().isEmpty()) images360List.add(val.toString());
+                }
+            }
+        }
+
+        if (!images360List.isEmpty()) {
             seekBar360.setVisibility(View.VISIBLE);
             seekBar360.setMax(images360List.size() - 1);
-
             for (String url : images360List) {
                 Glide.with(this).load(url).diskCacheStrategy(DiskCacheStrategy.ALL).preload();
             }
-
             seekBar360.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     if (fromUser && isAdded()) {
-                        Glide.with(DetailFragment.this)
-                                .load(images360List.get(progress))
-                                .placeholder(ivDetailImage.getDrawable())
-                                .dontAnimate()
-                                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                                .into(ivDetailImage);
+                        Glide.with(DetailFragment.this).load(images360List.get(progress))
+                                .placeholder(ivDetailImage.getDrawable()).dontAnimate()
+                                .diskCacheStrategy(DiskCacheStrategy.ALL).into(ivDetailImage);
                     }
                 }
                 @Override public void onStartTrackingTouch(SeekBar seekBar) {}
@@ -145,17 +181,13 @@ public class DetailFragment extends Fragment {
 
     private void cargarTallas(List<String> sizes) {
         layoutSizesContainer.removeAllViews();
-        for (String rawSize : sizes) { // rawSize viene como "42_5"
-
-            // --- MAGIA 2: FORMATEAR PARA MOSTRAR ---
-            String displaySize = rawSize.replace("_", "."); // displaySize es "42.5"
-
+        for (String rawSize : sizes) {
+            String displaySize = rawSize.replace("_", ".");
             TextView tvSize = new TextView(getContext());
-            tvSize.setText(displaySize); // Mostramos el número bonito con el punto
+            tvSize.setText(displaySize);
             tvSize.setTextSize(16f);
             tvSize.setGravity(Gravity.CENTER);
             tvSize.setBackgroundResource(R.drawable.bg_brand_item);
-
             tvSize.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.color_5));
             tvSize.setTextColor(ContextCompat.getColor(requireContext(), R.color.color_6));
 
@@ -174,10 +206,7 @@ public class DetailFragment extends Fragment {
                 tvSize.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.color_6));
                 tvSize.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
                 selectedSizeView = tvSize;
-
-                selectedSize = displaySize; // Guardamos "42.5" para que el usuario lo vea así en el carrito
-
-                // Pero a Firebase le seguimos pasando el "42_5" para que no pete al leer el stock
+                selectedSize = displaySize;
                 verificarStockRealTime(rawSize);
             });
             layoutSizesContainer.addView(tvSize);
@@ -219,17 +248,27 @@ public class DetailFragment extends Fragment {
         }
 
         DatabaseReference cartRef = FirebaseDatabase.getInstance().getReference("cart").child(user.getUid());
-
-        // Volvemos a cambiar el "." por "_" solo para que la Key del carrito no dé problemas en Firebase
         String cartItemId = sneaker.getId() + "_" + selectedSize.replace(".", "_");
+
+        // --- LÓGICA DE DESCUENTOS PARA EL CARRITO ---
+        double originalPrice = sneaker.getPrice();
+        double finalPrice = originalPrice;
+        int discountPct = 0;
+
+        if (sneaker.getDiscount() != null && sneaker.getDiscount().isActive()) {
+            discountPct = sneaker.getDiscount().getPercentage();
+            finalPrice = originalPrice - (originalPrice * (discountPct / 100.0));
+        }
 
         Map<String, Object> item = new HashMap<>();
         item.put("detalleCartId", cartItemId);
         item.put("productId", sneaker.getId());
         item.put("name", sneaker.getName());
-        item.put("price", sneaker.getPrice());
+        item.put("price", finalPrice);
+        item.put("originalPrice", originalPrice); // Guardamos el original para tacharlo en el carrito
+        item.put("discountPct", discountPct);     // Guardamos el porcentaje para el badge en el carrito
         item.put("imageUrl", sneaker.getImageUrl());
-        item.put("tallaElegida", selectedSize); // Aquí se guarda con el punto (ej. "42.5") para el diseño del carrito
+        item.put("tallaElegida", selectedSize);
         item.put("cantidad", 1);
 
         cartRef.child(cartItemId).setValue(item).addOnSuccessListener(aVoid -> {

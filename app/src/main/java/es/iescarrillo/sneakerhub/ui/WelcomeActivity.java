@@ -29,7 +29,6 @@ public class WelcomeActivity extends AppCompatActivity {
         // COMPROBAR SESIÓN PERSISTENTE ANTES DE MOSTRAR NADA
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
-            // Si ya hay usuario, vamos directos al Main
             Intent intent = new Intent(WelcomeActivity.this, MainActivity.class);
             startActivity(intent);
             finish();
@@ -46,7 +45,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
         Button btnLogin = findViewById(R.id.btnLogin);
         Button btnUnirse = findViewById(R.id.btnUnirse);
-        TextView btnGuest = findViewById(R.id.btnGuest); // NUEVO BOTÓN INVITADO
+        TextView btnGuest = findViewById(R.id.btnGuest);
 
         // Ir a Iniciar Sesión
         btnLogin.setOnClickListener(v -> {

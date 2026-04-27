@@ -12,7 +12,7 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_marginEnd="15dp"
-        app:cardBackgroundColor="#F5F5F5"
+        app:cardBackgroundColor="@color/color_5"
         app:cardCornerRadius="15dp"
         app:cardElevation="2dp"
         app:cardUseCompatPadding="false">
@@ -23,13 +23,13 @@
             android:layout_height="match_parent"
             android:padding="16dp"
             android:src="@drawable/ic_close"
-            app:tint="#E53935" />
+            app:tint="@color/color_7" />
     </androidx.cardview.widget.CardView>
 
     <androidx.cardview.widget.CardView
         android:layout_width="60dp"
         android:layout_height="60dp"
-        app:cardBackgroundColor="#F5F5F5"
+        app:cardBackgroundColor="@color/color_5"
         app:cardCornerRadius="15dp"
         app:cardElevation="2dp"
         app:cardUseCompatPadding="false">
@@ -40,7 +40,7 @@
             android:layout_height="match_parent"
             android:padding="14dp"
             android:src="@drawable/ic_save"
-            app:tint="#333333" />
+            app:tint="@color/color_6" />
     </androidx.cardview.widget.CardView>
 
 </LinearLayout>

@@ -1,143 +1,163 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    android:clipToPadding="false"
     android:paddingTop="60dp"
-    android:fillViewport="true">
+    android:paddingBottom="100dp"> <androidx.cardview.widget.CardView
+    android:id="@+id/cardDetailImage"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_marginHorizontal="20dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintHeight_percent="0.38">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <ImageView
+            android:id="@+id/ivDetailImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="20dp"
+            android:scaleType="fitCenter"
+            android:src="@android:color/transparent" />
+        <TextView
+            android:id="@+id/tvDetailDiscountBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_margin="16dp"
+            android:background="@drawable/bg_discount_badge"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            tools:text="-20%"
+            tools:visibility="visible" />
+    </FrameLayout>
+</androidx.cardview.widget.CardView>
+
+    <SeekBar
+        android:id="@+id/seekBar360"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="130dp">
+        android:layout_marginHorizontal="40dp"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        android:progressTint="@color/color_6"
+        android:thumbTint="@color/color_6"
+        app:layout_constraintTop_toBottomOf="@id/cardDetailImage" />
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardDetailImage"
-            android:layout_width="match_parent"
-            android:layout_height="300dp"
-            android:layout_marginHorizontal="20dp"
-            android:layout_marginTop="10dp"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/white"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+    <TextView
+        android:id="@+id/tvDetailBrand"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:textColor="@color/color_6"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintVertical_bias="0.1"
+        app:layout_constraintTop_toBottomOf="@id/seekBar360"
+        app:layout_constraintBottom_toTopOf="@+id/tvDetailName"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="Jordan 1" />
 
-            <ImageView
-                android:id="@+id/ivDetailImage"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="20dp"
-                android:scaleType="fitCenter"
-                android:src="@android:color/transparent" />
-        </androidx.cardview.widget.CardView>
+    <TextView
+        android:id="@+id/tvDetailName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_marginEnd="24dp"
+        android:textColor="#666666"
+        android:textSize="15sp"
+        app:layout_constraintTop_toBottomOf="@id/tvDetailBrand"
+        app:layout_constraintBottom_toTopOf="@+id/tvDetailOriginalPrice"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@id/tvDetailBrand"
+        tools:text="Retro Low OG SP Travis Scott Medium Olive" />
 
-        <SeekBar
-            android:id="@+id/seekBar360"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="40dp"
-            android:layout_marginTop="10dp"
-            android:visibility="gone"
-            android:progressTint="@color/color_6"
-            android:thumbTint="@color/color_6"
-            app:layout_constraintTop_toBottomOf="@id/cardDetailImage"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+    <TextView
+        android:id="@+id/tvDetailOriginalPrice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="#9E9E9E"
+        android:textSize="13sp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/tvDetailName"
+        app:layout_constraintBottom_toTopOf="@+id/tvDetailPrice"
+        app:layout_constraintStart_toStartOf="@id/tvDetailBrand"
+        tools:text="200.00 €"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/tvDetailPrice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textColor="@color/color_6"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/tvDetailOriginalPrice"
+        app:layout_constraintBottom_toTopOf="@id/tvLabelSize"
+        app:layout_constraintStart_toStartOf="@id/tvDetailBrand"
+        tools:text="150 €" />
+
+    <TextView
+        android:id="@+id/tvLabelSize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Selecciona tu talla"
+        android:textColor="@color/color_6"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/tvDetailPrice"
+        app:layout_constraintBottom_toTopOf="@id/scrollSizes"
+        app:layout_constraintStart_toStartOf="@id/tvDetailBrand" />
+
+    <HorizontalScrollView
+        android:id="@+id/scrollSizes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="25dp"
+        android:clipToPadding="false"
+        android:scrollbars="none"
+        app:layout_constraintTop_toBottomOf="@id/tvLabelSize"
+        app:layout_constraintBottom_toTopOf="@id/btnAddToCart">
 
         <LinearLayout
-            android:id="@+id/dotsLayout"
+            android:id="@+id/layoutSizesContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/seekBar360"> </LinearLayout>
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
 
-        <TextView
-            android:id="@+id/tvDetailBrand"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="20dp"
-            android:text="Jordan 1"
-            android:textColor="@color/color_6"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/dotsLayout" />
+    <Button
+        android:id="@+id/btnAddToCart"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@color/color_6"
+        android:text="Añadir al carrito"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        app:cornerRadius="28dp"
+        app:layout_constraintTop_toBottomOf="@id/scrollSizes"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-        <TextView
-            android:id="@+id/tvDetailName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="24dp"
-            android:text="Retro Low OG SP Travis Scott Medium Olive"
-            android:textColor="#666666"
-            android:textSize="16sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@id/tvDetailBrand"
-            app:layout_constraintTop_toBottomOf="@id/tvDetailBrand" />
-
-        <TextView
-            android:id="@+id/tvDetailPrice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="150 €"
-            android:textColor="@color/color_6"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="@id/tvDetailBrand"
-            app:layout_constraintTop_toBottomOf="@id/tvDetailName" />
-
-        <TextView
-            android:id="@+id/tvLabelSize"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
-            android:text="Selecciona tu talla"
-            android:textColor="@color/color_6"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="@id/tvDetailBrand"
-            app:layout_constraintTop_toBottomOf="@id/tvDetailPrice" />
-
-        <HorizontalScrollView
-            android:id="@+id/scrollSizes"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
-            android:scrollbars="none"
-            app:layout_constraintTop_toBottomOf="@id/tvLabelSize">
-
-            <LinearLayout
-                android:id="@+id/layoutSizesContainer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal" />
-        </HorizontalScrollView>
-
-        <Button
-            android:id="@+id/btnAddToCart"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:layout_marginHorizontal="24dp"
-            android:layout_marginTop="40dp"
-            android:backgroundTint="@color/color_6"
-            android:text="Añadir al carrito"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            app:cornerRadius="30dp"
-            app:layout_constraintTop_toBottomOf="@id/scrollSizes" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</androidx.core.widget.NestedScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

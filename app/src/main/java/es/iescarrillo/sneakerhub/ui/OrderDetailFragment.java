@@ -25,7 +25,6 @@ public class OrderDetailFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // --- CAPTURAMOS EL GESTO/BOTÓN ATRÁS DEL SISTEMA ---
         requireActivity().getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {

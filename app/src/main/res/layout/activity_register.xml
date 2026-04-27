@@ -82,35 +82,53 @@
                 android:textSize="14sp"
                 android:fontFamily="@font/app_font" />
 
-            <EditText
-                android:id="@+id/etPassword"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
                 android:layout_marginBottom="15dp"
-                android:background="@drawable/bg_input_white"
-                android:drawableStart="@drawable/ic_key"
-                android:drawablePadding="10dp"
-                android:hint="Contraseña"
-                android:inputType="textPassword"
-                android:paddingStart="15dp"
-                android:textColorHint="@color/color_3"
-                android:textSize="14sp"
-                android:fontFamily="@font/app_font" />
+                app:hintEnabled="false"
+                app:endIconMode="password_toggle"
+                app:endIconTint="@color/color_3">
 
-            <EditText
-                android:id="@+id/etConfirmPassword"
+                <EditText
+                    android:id="@+id/etPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/bg_input_white"
+                    android:drawableStart="@drawable/ic_key"
+                    android:drawablePadding="10dp"
+                    android:hint="Contraseña"
+                    android:inputType="textPassword"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="15dp"
+                    android:textColorHint="@color/color_3"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/app_font" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
                 android:layout_marginBottom="15dp"
-                android:background="@drawable/bg_input_white"
-                android:drawableStart="@drawable/ic_key"
-                android:drawablePadding="10dp"
-                android:hint="Repetir Contraseña"
-                android:inputType="textPassword"
-                android:paddingStart="15dp"
-                android:textColorHint="@color/color_3"
-                android:textSize="14sp"
-                android:fontFamily="@font/app_font" />
+                app:hintEnabled="false"
+                app:endIconMode="password_toggle"
+                app:endIconTint="@color/color_3">
+
+                <EditText
+                    android:id="@+id/etConfirmPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/bg_input_white"
+                    android:drawableStart="@drawable/ic_key"
+                    android:drawablePadding="10dp"
+                    android:hint="Repetir Contraseña"
+                    android:inputType="textPassword"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="15dp"
+                    android:textColorHint="@color/color_3"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/app_font" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <EditText
                 android:id="@+id/etPhone"

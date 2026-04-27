@@ -1,6 +1,5 @@
 package es.iescarrillo.sneakerhub.adapters;
 
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +8,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+import java.util.ArrayList;
 import java.util.List;
 import es.iescarrillo.sneakerhub.R;
 
@@ -16,19 +16,31 @@ public class GenericSideAdapter extends RecyclerView.Adapter<GenericSideAdapter.
 
     private List<String> itemList;
     private OnItemClickListener listener;
-    private int selectedPos = -1;
+    private List<String> selectedItems = new ArrayList<>();
+    private boolean isMultiSelect;
 
     public interface OnItemClickListener { void onItemClick(String item); }
 
-    public GenericSideAdapter(List<String> itemList, OnItemClickListener listener) {
+    public GenericSideAdapter(List<String> itemList, boolean isMultiSelect, OnItemClickListener listener) {
         this.itemList = itemList;
+        this.isMultiSelect = isMultiSelect;
         this.listener = listener;
+    }
+
+    public void clearSelection() {
+        selectedItems.clear();
+        notifyDataSetChanged();
+    }
+
+    public ArrayList<String> getSelectedItems() {
+        return new ArrayList<>(selectedItems);
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_filter_pill, parent, false);        return new ViewHolder(view);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_filter_pill, parent, false);
+        return new ViewHolder(view);
     }
 
     @Override
@@ -38,16 +50,29 @@ public class GenericSideAdapter extends RecyclerView.Adapter<GenericSideAdapter.
         holder.tvName.setVisibility(View.VISIBLE);
         holder.tvName.setText(item);
 
-        if (selectedPos == position) {
+        // --- COMPROBAMOS SI ESTÁ EN LA LISTA ---
+        if (selectedItems.contains(item)) {
             holder.root.setBackgroundTintList(ContextCompat.getColorStateList(holder.itemView.getContext(), R.color.color_6));
-            holder.tvName.setTextColor(Color.WHITE);
+            holder.tvName.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.white));
         } else {
             holder.root.setBackgroundTintList(ContextCompat.getColorStateList(holder.itemView.getContext(), R.color.color_5));
             holder.tvName.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.color_6));
         }
 
         holder.itemView.setOnClickListener(v -> {
-            selectedPos = holder.getAdapterPosition();
+            // LÓGICA DE MULTISELECCIÓN
+            if (!isMultiSelect) {
+                // Si no es multiselect (ej. Precios), borramos lo anterior
+                selectedItems.clear();
+            }
+
+            // Si ya estaba seleccionado, lo quitamos. Si no, lo añadimos.
+            if (selectedItems.contains(item)) {
+                selectedItems.remove(item);
+            } else {
+                selectedItems.add(item);
+            }
+
             notifyDataSetChanged();
             listener.onItemClick(item);
         });

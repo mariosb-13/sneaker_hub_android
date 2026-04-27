@@ -1,6 +1,7 @@
 package es.iescarrillo.sneakerhub.ui;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -13,6 +14,7 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -29,13 +31,19 @@ public class SplashActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SharedPreferences sharedPreferences = getSharedPreferences("AppConfig", MODE_PRIVATE);
+        boolean isDarkMode = sharedPreferences.getBoolean("DARK_MODE", false);
+        if (isDarkMode) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+
         super.onCreate(savedInstanceState);
 
-        // Configuración Inmersiva de la ventana (pantalla completa sin barras)
         configurarVentanaInmersiva();
         setContentView(R.layout.activity_splash);
 
-        // Animación de Entrada del Logo usando tu ID real
         ImageView ivLogoSplash = findViewById(R.id.ivLogoSplash);
         if (ivLogoSplash != null) {
             iniciarAnimacionProgresiva(ivLogoSplash);
@@ -65,7 +73,6 @@ public class SplashActivity extends AppCompatActivity {
         Intent intent = new Intent(SplashActivity.this, MainActivity.class);
         startActivity(intent);
 
-        // Suave transición de salida para un toque profesional
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         finish();
     }

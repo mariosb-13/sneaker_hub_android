@@ -60,20 +60,30 @@
                 android:inputType="textEmailAddress"
                 android:paddingStart="15dp" />
 
-            <EditText
-                android:id="@+id/etPassword"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="55dp"
+                android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"
-                android:background="@drawable/bg_input_white"
-                android:drawableStart="@drawable/ic_key"
-                android:drawablePadding="10dp"
-                android:hint="@string/passwd"
-                android:inputType="textPassword"
-                android:paddingStart="15dp" />
+                app:hintEnabled="false"
+                app:endIconMode="password_toggle"
+                app:endIconTint="@color/color_3">
+
+                <EditText
+                    android:id="@+id/etPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="55dp"
+                    android:background="@drawable/bg_input_white"
+                    android:drawableStart="@drawable/ic_key"
+                    android:drawablePadding="10dp"
+                    android:hint="@string/passwd"
+                    android:inputType="textPassword"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="15dp" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
-                android:id="@+id/tvForgotPassword"  android:layout_width="wrap_content"
+                android:id="@+id/tvForgotPassword"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginBottom="20dp"

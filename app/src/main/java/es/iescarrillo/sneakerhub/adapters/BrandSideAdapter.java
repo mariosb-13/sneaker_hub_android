@@ -1,6 +1,5 @@
 package es.iescarrillo.sneakerhub.adapters;
 
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import java.util.ArrayList;
 import java.util.List;
 import es.iescarrillo.sneakerhub.R;
 import es.iescarrillo.sneakerhub.models.Brand;
@@ -18,13 +18,26 @@ public class BrandSideAdapter extends RecyclerView.Adapter<BrandSideAdapter.Bran
 
     private List<Brand> brandList;
     private OnBrandClickListener listener;
-    private String selectedBrandName = "";
+    private List<String> selectedBrandNames = new ArrayList<>();
 
     public interface OnBrandClickListener { void onBrandClick(Brand brand); }
 
     public BrandSideAdapter(List<Brand> brandList, OnBrandClickListener listener) {
         this.brandList = brandList;
         this.listener = listener;
+    }
+
+    public void clearSelection() {
+        selectedBrandNames.clear();
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Devuelve una lista con los nombres de las marcas seleccionadas.
+     * @return
+     */
+    public ArrayList<String> getSelectedBrands() {
+        return new ArrayList<>(selectedBrandNames);
     }
 
     @NonNull
@@ -38,25 +51,28 @@ public class BrandSideAdapter extends RecyclerView.Adapter<BrandSideAdapter.Bran
     public void onBindViewHolder(@NonNull BrandViewHolder holder, int position) {
         Brand brand = brandList.get(position);
 
-        // ENCENDEMOS LA IMAGEN y apagamos el texto
         holder.ivPillIcon.setVisibility(View.VISIBLE);
         holder.tvPillName.setVisibility(View.GONE);
 
-        // Cargamos el logo con Glide
         Glide.with(holder.itemView.getContext())
                 .load(brand.getIcon())
                 .into(holder.ivPillIcon);
 
-        if (selectedBrandName.equals(brand.getName())) {
+        // COMPROBAMOS SI LA MARCA ESTÁ EN LA LISTA
+        if (selectedBrandNames.contains(brand.getName())) {
             holder.lyPillRoot.setBackgroundTintList(ContextCompat.getColorStateList(holder.itemView.getContext(), R.color.color_6));
-            holder.ivPillIcon.setColorFilter(Color.WHITE);
+            holder.ivPillIcon.setColorFilter(ContextCompat.getColor(holder.itemView.getContext(), R.color.white));
         } else {
             holder.lyPillRoot.setBackgroundTintList(ContextCompat.getColorStateList(holder.itemView.getContext(), R.color.color_5));
-            holder.ivPillIcon.clearColorFilter();
+            holder.ivPillIcon.setColorFilter(ContextCompat.getColor(holder.itemView.getContext(), R.color.color_6));
         }
 
         holder.itemView.setOnClickListener(v -> {
-            selectedBrandName = brand.getName();
+            if (selectedBrandNames.contains(brand.getName())) {
+                selectedBrandNames.remove(brand.getName());
+            } else {
+                selectedBrandNames.add(brand.getName());
+            }
             notifyDataSetChanged();
             listener.onBrandClick(brand);
         });

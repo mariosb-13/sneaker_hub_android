@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app_res="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <ImageView
+        android:id="@+id/ivCancel"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:src="@drawable/ic_close"
+        app_res:layout_constraintBottom_toTopOf="@+id/tvCancelTitle"
+        app_res:layout_constraintEnd_toEndOf="parent"
+        app_res:layout_constraintHorizontal_bias="0.498"
+        app_res:layout_constraintStart_toStartOf="parent"
+        app_res:layout_constraintTop_toTopOf="parent"
+        app_res:layout_constraintVertical_chainStyle="packed"
+        app_res:tint="@color/color_7" />
+
+    <TextView
+    android:id="@+id/tvCancelTitle"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="24dp"
+    android:text="Pago Cancelado"
+    android:textColor="@color/color_7"
+    android:textSize="28sp"
+    android:textStyle="bold"
+    app_res:layout_constraintBottom_toTopOf="@+id/tvCancelMessage"
+    app_res:layout_constraintEnd_toEndOf="parent"
+    app_res:layout_constraintStart_toStartOf="parent"
+    app_res:layout_constraintTop_toBottomOf="@+id/ivCancel" />
+
+    <TextView
+        android:id="@+id/tvCancelMessage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="40dp"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:text="El proceso de compra ha sido interrumpido.\n\nNo se ha realizado ningún cargo en tu tarjeta ni se ha descontado stock."
+        android:textColor="@color/color_2"
+        android:textSize="16sp"
+        app_res:layout_constraintBottom_toTopOf="@+id/btnBackToCart"
+        app_res:layout_constraintEnd_toEndOf="parent"
+        app_res:layout_constraintStart_toStartOf="parent"
+        app_res:layout_constraintTop_toBottomOf="@+id/tvCancelTitle" />
+
+    <Button
+        android:id="@+id/btnBackToCart"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginHorizontal="40dp"
+        android:layout_marginBottom="120dp"
+        android:backgroundTint="@color/color_6"
+        android:text="Volver al Carrito"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app_res:cornerRadius="25dp"
+        app_res:layout_constraintBottom_toBottomOf="parent"
+        app_res:layout_constraintEnd_toEndOf="parent"
+        app_res:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
